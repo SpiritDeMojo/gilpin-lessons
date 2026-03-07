@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Gilpin Gazette — Developer Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/themes/prism-tomorrow.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        :root {
+            --gold: #c5a065;
+            --gold-hover: #b59456;
+            --gold-dim: rgba(197, 160, 101, 0.1);
+            --bg-dark: #0a0a0a;
+            --bg-card: #141414;
+            --bg-sidebar: #0f0f0f;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #27272a;
+            --sidebar-width: 280px;
+        }
+
+        body.light-mode {
+            --bg-dark: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-sidebar: #f1f5f9;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --gold-dim: rgba(197, 160, 101, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            line-height: 1.7;
+            font-size: 17px;
+            overflow-x: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Scroll Progress Bar */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            height: 4px;
+            background: var(--bg-card);
+            z-index: 1000;
+            transition: left 0.4s, width 0.4s;
+        }
+        .progress-bar {
+            height: 100%;
+            background: var(--gold);
+            width: 0%;
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 0 10px var(--gold);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
+        }
+        
+        body.focus-mode .sidebar {
+            transform: translateX(-100%);
+        }
+        body.focus-mode .progress-container {
+            left: 0;
+            width: 100%;
+        }
+
+        .brand {
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: var(--gold);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .lesson-nav {
+            padding: 14px;
+            border-radius: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .lesson-nav.active {
+            border-color: var(--gold);
+            background: var(--gold-dim);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .lesson-nav.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: transparent;
+        }
+
+        .lesson-nav:hover:not(.locked) {
+            transform: translateY(-2px);
+            border-color: var(--gold);
+        }
+
+        .locked-date {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 400;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Main Content */
+        .main-wrapper {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body.focus-mode .main-wrapper {
+            margin-left: 0;
+        }
+
+        .topbar {
+            padding: 20px 40px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            position: sticky;
+            top: 4px;
+            background: linear-gradient(to bottom, var(--bg-dark) 60%, transparent);
+            z-index: 90;
+        }
+
+        .btn {
+            background: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+            background: var(--gold-dim);
+        }
+
+        .btn.primary {
+            background: var(--gold);
+            color: #000;
+            border-color: var(--gold);
+        }
+        .btn.primary:hover {
+            background: var(--gold-hover);
+            color: #000;
+            box-shadow: 0 0 15px var(--gold-dim);
+        }
+
+        .content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px 40px 100px;
+        }
+
+        /* Content Formatting (ADHD Friendly) */
+        .title-block {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .title-block h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            line-height: 1.2;
+        }
+
+        .title-block h2 {
+            color: var(--gold);
+            font-size: 1.2rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .quote {
+            border-left: 4px solid var(--gold);
+            background: var(--gold-dim);
+            padding: 20px 30px;
+            border-radius: 0 12px 12px 0;
+            font-style: italic;
+            color: var(--gold);
+            font-size: 1.1rem;
+            margin: 0 0 40px 0;
+        }
+
+        /* ADHD "Chunking" using distinct cards */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .card:hover {
+            border-color: var(--gold-dim);
+            transform: translateY(-2px);
+        }
+
+        .card h3 {
+            margin-top: 0;
+            color: var(--gold);
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        p {
+            margin-bottom: 1.5rem;
+            color: var(--text-muted);
+        }
+
+        strong, mark {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        mark {
+            background: var(--gold-dim);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--gold);
+        }
+
+        ul, ol {
+            color: var(--text-muted);
+            padding-left: 20px;
+            margin-bottom: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+            background: var(--bg-dark);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--gold-dim);
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: #111 !important;
+            border-radius: 12px !important;
+            padding: 20px !important;
+            border: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+            margin-bottom: 1.5rem !important;
+        }
+
+        /* Interactive Quiz Styles */
+        .quiz-section {
+            margin-top: 60px;
+            border-top: 2px dashed var(--border-color);
+            padding-top: 40px;
+        }
+
+        .quiz-question {
+            margin-bottom: 30px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 30px;
+        }
+
+        .quiz-question p {
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-btn {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 15px 20px;
+            border-radius: 10px;
+            text-align: left;
+            cursor: pointer;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .option-btn:hover:not(.disabled) {
+            background: var(--gold-dim);
+            border-color: var(--gold);
+            color: var(--text-main);
+        }
+
+        .option-btn.correct {
+            background: rgba(34, 197, 94, 0.1);
+            border-color: #22c55e;
+            color: #22c55e;
+        }
+
+        .option-btn.wrong {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .option-btn.disabled {
+            cursor: default;
+            opacity: 0.7;
+        }
+
+        .quiz-score {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            background: var(--gold-dim);
+            border-radius: 16px;
+            border: 1px solid var(--gold);
+            margin-top: 30px;
+            animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .quiz-score h2 {
+            margin: 0 0 10px 0;
+            color: var(--gold);
+            font-size: 2rem;
+        }
+
+        .quiz-score p {
+            margin: 0;
+            color: var(--text-main);
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .main-wrapper { margin-left: 0; }
+            .content { padding: 20px; }
+            .topbar { padding: 10px 20px; }
+            .progress-container { left: 0; width: 100%; }
+            body.focus-mode .sidebar { transform: translateX(0); } /* Inverse on mobile, toggle opens menu */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Scroll Progress -->
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="brand">
+            🏨 The Gilpin Gazette
+        </div>
+        
+        <div class="lesson-nav">
+            <span>📖</span>
+            <div>
+                1. The Big Picture
+                <span class="locked-date">Architecture & Overview</span>
+            </div>
+            <span style="margin-left: auto; color: var(--gold);">✓</span>
+        </div>
+
+        <div class="lesson-nav active">
+            <span>📖</span>
+            <div>
+                2. Auth & Security
+                <span class="locked-date">Guarding the Kingdom</span>
+            </div>
+        </div>
+        
+        <div class="lesson-nav locked">
+            <span>🔒</span>
+            <div>
+                3. The PDF Parser
+                <span class="locked-date">Unlocks in 2 days</span>
+            </div>
+        </div>
+
+        <div class="lesson-nav locked">
+            <span>🔒</span>
+            <div>
+                4. Firebase RTDB
+                <span class="locked-date">Unlocks in 3 days</span>
+            </div>
+        </div>
+
+        <div class="lesson-nav locked">
+            <span>🔒</span>
+            <div>
+                5. AI / Gemini Features
+                <span class="locked-date">Unlocks in 4 days</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-wrapper">
+        <div class="topbar">
+            <button class="btn" id="focusToggle">
+                <span class="icon">🎯</span> Focus Mode
+            </button>
+            <button class="btn" id="themeToggle">
+                <span class="icon">🌓</span> Theme
+            </button>
+        </div>
+
+        <div class="content">
+            
+            <div class="title-block">
+                <h2>Issue #2 — Saturday, 7 March 2026</h2>
+                <h1>Auth & Security: Guarding the Kingdom</h1>
+            </div>
+
+            <div class="quote">
+                "Security isn't a feature, it's the foundation. We don't just lock the doors; we check the ID of everyone who walks in."
+            </div>
+
+            <!-- CHUNK 1 -->
+            <div class="card">
+                <h3>🔐 The Multi-Layered Auth Flow</h3>
+                <p>The Gilpin Arrivals Tool uses a sophisticated hybrid authentication model to ensure both ease of use and maximum security.</p>
+                <ol>
+                    <li><strong>Initial Login:</strong> Handled by <strong>Firebase Authentication</strong> (Email/Password or Google). Access is restricted to <code>@thegilpin.co.uk</code> domains.</li>
+                    <li><strong>Token Verification:</strong> The Firebase ID Token is sent to <code>/api/validate-auth</code>.</li>
+                    <li><strong>HMAC Issuance:</strong> Once verified, the server generates an <strong>HMAC Session Token</strong>. This token is used for all subsequent internal API calls.</li>
+                </ol>
+                <p>🔥 <strong>Pro Tip:</strong> This "Double-Lock" mechanism ensures that even if a client-side Firebase session persists, the API access requires a fresh, server-validated HMAC token.</p>
+            </div>
+
+            <!-- CHUNK 2 -->
+            <div class="card">
+                <h3>🛡️ HMAC Token System</h3>
+                <p>Internal API requests are secured using Hash-based Message Authentication Codes (HMAC).</p>
+                <ul>
+                    <li><strong>Format:</strong> <code>timestamp.hmac_hash</code></li>
+                    <li><strong>Algorithm:</strong> SHA-256 using a secret <code>AUTH_SECRET</code>.</li>
+                    <li><strong>Expiry:</strong> Tokens automatically expire after <mark>8 hours</mark>.</li>
+                    <li><strong>Security:</strong> The server uses constant-time comparison to prevent <em>timing attacks</em> during verification.</li>
+                </ul>
+            </div>
+
+            <!-- CHUNK 3 -->
+            <div class="card">
+                <h3>👥 Role-Based Access Control (RBAC)</h3>
+                <p>Not all staff members see the same data. Access is governed by both <strong>Roles</strong> and <strong>Departments</strong>.</p>
+                <table>
+                    <tr><th>Role</th><th>Capabilities</th></tr>
+                    <tr><td><strong>Admin</strong></td><td>Full system access, user management, role assignment.</td></tr>
+                    <tr><td><strong>Staff</strong></td><td>Standard dashboard access based on department.</td></tr>
+                    <tr><td><strong>Viewer</strong></td><td>Read-only access, primarily for analytics.</td></tr>
+                </table>
+                <p>Departments like <mark>REC</mark> (Reception), <mark>NIGHT</mark> (Night Audit), and <mark>HOD</mark> (Heads of Department) are granted <code>FULL_ACCESS</code> to all dashboard tabs.</p>
+            </div>
+
+            <!-- CHUNK 4 -->
+            <div class="card">
+                <h3>🕵️ GDPR & AI Anonymization</h3>
+                <p>When guest data is sent to external AI services (like Gemini), we must protect PII (Personally Identifiable Information). The <code>anonymize.ts</code> utility is the silent guardian here.</p>
+                <p><strong>The Process:</strong></p>
+                <ol>
+                    <li>Client strips sensitive fields: <code>name</code>, <code>car</code>, <code>carDetails</code>.</li>
+                    <li>Names are replaced with tokens (e.g., "Guest A").</li>
+                    <li>AI processes the "clean" data and returns structured results.</li>
+                    <li>The Client <strong>deanonymizes</strong> the results using a local name-to-token map before showing them to the user.</li>
+                </ol>
+            </div>
+
+            <!-- CHUNK 5 -->
+            <div class="card">
+                <h3>🔥 Firebase Security Rules</h3>
+                <p>The Realtime Database isn't a "wild west". Access is strictly enforced via <code>database.rules.json</code>.</p>
+                <pre><code class="language-json">{
+  "sessions": {
+    "$sessionId": {
+      ".read": "auth != null && (auth.token.role === 'admin' || auth.token.role === 'staff')",
+      ".write": "auth != null && auth.token.role === 'admin'"
+    }
+  }
+}</code></pre>
+                <p>Rules verify the user's <strong>Custom Claims</strong> (set via the Admin Panel) before allowing any read/write operation.</p>
+            </div>
+
+            <!-- CHUNK 6 -->
+            <div class="card">
+                <h3>🚦 Live Token Safety</h3>
+                <p>How does the browser get the Gemini API key without it being hardcoded? It calls <code>/api/live-token</code>.</p>
+                <p>This endpoint is the most protected in the app:</p>
+                <ul>
+                    <li>Requires a valid <strong>HMAC Bearer token</strong>.</li>
+                    <li>Enforces <strong>Origin Validation</strong> (only allowing requests from the official app domain).</li>
+                    <li>Uses <code>Cache-Control: no-store</code> to prevent the key from being cached by proxies.</li>
+                </ul>
+            </div>
+
+
+            <!-- INTERACTIVE QUIZ -->
+            <div class="quiz-section" id="quiz-anchor">
+                <div class="title-block" style="margin-bottom: 30px;">
+                    <h2>Knowledge Check</h2>
+                    <h1 style="font-size: 1.8rem;">Security & Auth Mastery</h1>
+                </div>
+
+                <div class="quiz-container" id="quizContainer">
+                    <!-- Q1 -->
+                    <div class="quiz-question" data-answer="1">
+                        <p>1. What is the primary purpose of the anonymize.ts utility?</p>
+                        <div class="options">
+                            <button class="option-btn" data-index="0">A) Encrypt data in the database</button>
+                            <button class="option-btn" data-index="1">B) Strip PII (names/cars) before AI processing</button>
+                            <button class="option-btn" data-index="2">C) Validate user passwords</button>
+                            <button class="option-btn" data-index="3">D) Generate HMAC tokens</button>
+                        </div>
+                    </div>
+
+                    <!-- Q2 -->
+                    <div class="quiz-question" data-answer="2">
+                        <p>2. How long does an HMAC session token remain valid?</p>
+                        <div class="options">
+                            <button class="option-btn" data-index="0">A) 1 hour</button>
+                            <button class="option-btn" data-index="1">B) 24 hours</button>
+                            <button class="option-btn" data-index="2">C) 8 hours</button>
+                            <button class="option-btn" data-index="3">D) Until the user logs out</button>
+                        </div>
+                    </div>
+
+                    <!-- Q3 -->
+                    <div class="quiz-question" data-answer="0">
+                        <p>3. Which hash algorithm is used to generate the HMAC session tokens?</p>
+                        <div class="options">
+                            <button class="option-btn" data-index="0">A) SHA-256</button>
+                            <button class="option-btn" data-index="1">B) MD5</button>
+                            <button class="option-btn" data-index="2">C) bcrypt</button>
+                            <button class="option-btn" data-index="3">D) AES-128</button>
+                        </div>
+                    </div>
+
+                    <!-- Q4 -->
+                    <div class="quiz-question" data-answer="3">
+                        <p>4. Where are the Firebase Realtime Database access rules defined?</p>
+                        <div class="options">
+                            <button class="option-btn" data-index="0">A) In the React UI code</button>
+                            <button class="option-btn" data-index="1">B) Inside the /api/ folder</button>
+                            <button class="option-btn" data-index="2">C) In constants.ts</button>
+                            <button class="option-btn" data-index="3">D) In database.rules.json</button>
+                        </div>
+                    </div>
+
+                    <!-- Q5 -->
+                    <div class="quiz-question" data-answer="1">
+                        <p>5. What is the first step in the authentication flow?</p>
+                        <div class="options">
+                            <button class="option-btn" data-index="0">A) Request an HMAC token</button>
+                            <button class="option-btn" data-index="1">B) Firebase Auth login to get an ID Token</button>
+                            <button class="option-btn" data-index="2">C) Validate the origin of the request</button>
+                            <button class="option-btn" data-index="3">D) Call /api/live-token</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quiz-score" id="quizScore">
+                    <h2>🎉 Security Expert!</h2>
+                    <p>Lesson 2 complete. You've secured the kingdom.</p>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/components/prism-typescript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/components/prism-jsx.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/components/prism-json.min.js"></script>
+    
+    <script>
+        // Scroll Progress Bar
+        window.addEventListener('scroll', () => {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById('progressBar').style.width = scrolled + '%';
+        });
+
+        // Focus Mode Toggle
+        const focusToggle = document.getElementById('focusToggle');
+        focusToggle.addEventListener('click', () => {
+            document.body.classList.toggle('focus-mode');
+            if (document.body.classList.contains('focus-mode')) {
+                focusToggle.innerHTML = '<span class="icon">📖</span> Show Menu';
+            } else {
+                focusToggle.innerHTML = '<span class="icon">🎯</span> Focus Mode';
+            }
+        });
+
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+        });
+
+        // Interactive Quiz Logic
+        let score = 0;
+        let answeredQuestions = 0;
+        const totalQuestions = document.querySelectorAll('.quiz-question').length;
+
+        document.querySelectorAll('.quiz-question').forEach(question => {
+            const correctAnswer = parseInt(question.getAttribute('data-answer'));
+            const options = question.querySelectorAll('.option-btn');
+
+            options.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Prevent double answering
+                    if (this.parentElement.querySelector('.disabled')) return;
+
+                    const selectedAnswer = parseInt(this.getAttribute('data-index'));
+                    
+                    // Disable all options in this question
+                    options.forEach(o => o.classList.add('disabled'));
+
+                    if (selectedAnswer === correctAnswer) {
+                        this.classList.add('correct');
+                        this.innerHTML += ' <span>✅</span>';
+                        score++;
+                    } else {
+                        this.classList.add('wrong');
+                        this.innerHTML += ' <span>❌</span>';
+                        // Highlight correct one
+                        options[correctAnswer].classList.add('correct');
+                        options[correctAnswer].classList.remove('disabled'); // keep it slightly vibrant
+                    }
+
+                    answeredQuestions++;
+
+                    // Check if quiz is complete
+                    if (answeredQuestions === totalQuestions) {
+                        setTimeout(() => {
+                            const scoreDiv = document.getElementById('quizScore');
+                            scoreDiv.style.display = 'block';
+                            
+                            if (score === totalQuestions) {
+                                scoreDiv.innerHTML = `<h2>🎉 Security Expert! (${score}/${totalQuestions})</h2><p>Lesson 2 complete. You've secured the kingdom.</p>`;
+                                fireConfetti();
+                            } else {
+                                scoreDiv.innerHTML = `<h2>Keep Studying! (${score}/${totalQuestions})</h2><p>Review the security protocols above. You've still completed Lesson 2.</p>`;
+                            }
+                            
+                            scoreDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 500);
+                    }
+                });
+            });
+        });
+
+        function fireConfetti() {
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+
+            function randomInRange(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
+                }
+
+                var particleCount = 50 * (timeLeft / duration);
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
+        }
+    </script>
+</body>
+</html>

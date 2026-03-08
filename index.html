@@ -4,15 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Gilpin Gazette — Developer Edition</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <meta name="description" content="Issue #3 — The PDF Parser: Turning Paper into Data">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,600;0,800;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/themes/prism-tomorrow.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    
+
     <style>
         :root {
             --gold: #c5a065;
             --gold-hover: #b59456;
-            --gold-dim: rgba(197, 160, 101, 0.1);
+            --gold-dim: rgba(197, 160, 101, 0.12);
+            --gold-glow: rgba(197, 160, 101, 0.25);
             --bg-dark: #0a0a0a;
             --bg-card: #141414;
             --bg-sidebar: #0f0f0f;
@@ -20,54 +22,69 @@
             --text-muted: #94a3b8;
             --border-color: #27272a;
             --sidebar-width: 280px;
+            --topbar-height: 64px;
+            --transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         body.light-mode {
-            --bg-dark: #f8fafc;
+            --bg-dark: #f5f5f0;
             --bg-card: #ffffff;
-            --bg-sidebar: #f1f5f9;
+            --bg-sidebar: #eeede8;
             --text-main: #0f172a;
             --text-muted: #64748b;
-            --border-color: #e2e8f0;
-            --gold-dim: rgba(197, 160, 101, 0.2);
+            --border-color: #dde1e7;
+            --gold-dim: rgba(197, 160, 101, 0.15);
+            --gold-glow: rgba(197, 160, 101, 0.2);
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html { scroll-behavior: smooth; }
 
         body {
             font-family: 'Inter', system-ui, sans-serif;
             background-color: var(--bg-dark);
             color: var(--text-main);
-            margin: 0;
-            line-height: 1.7;
+            line-height: 1.75;
             font-size: 17px;
             overflow-x: hidden;
             transition: background-color 0.3s, color 0.3s;
         }
 
-        /* Scroll Progress Bar */
+        /* ───── SCROLL PROGRESS ───── */
         .progress-container {
             position: fixed;
             top: 0;
             left: var(--sidebar-width);
             width: calc(100% - var(--sidebar-width));
-            height: 4px;
-            background: var(--bg-card);
-            z-index: 1000;
-            transition: left 0.4s, width 0.4s;
+            height: 3px;
+            background: transparent;
+            z-index: 300;
+            transition: left var(--transition), width var(--transition);
         }
         .progress-bar {
             height: 100%;
-            background: var(--gold);
+            background: linear-gradient(90deg, var(--gold), #e8c98a);
             width: 0%;
-            border-top-right-radius: 4px;
-            border-bottom-right-radius: 4px;
-            box-shadow: 0 0 10px var(--gold);
+            border-radius: 0 2px 2px 0;
+            box-shadow: 0 0 12px var(--gold-glow);
+            transition: width 0.1s linear;
         }
 
-        /* Sidebar */
+        /* ───── OVERLAY (mobile) ───── */
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(2px);
+            z-index: 99;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        body.sidebar-open .overlay { display: block; opacity: 1; }
+
+        /* ───── SIDEBAR ───── */
         .sidebar {
             position: fixed;
             top: 0;
@@ -76,34 +93,39 @@
             height: 100vh;
             background-color: var(--bg-sidebar);
             border-right: 1px solid var(--border-color);
-            padding: 30px 20px;
+            padding: 28px 18px 28px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            gap: 10px;
+            transition: transform var(--transition);
             z-index: 100;
+            overflow-y: auto;
         }
-        
-        body.focus-mode .sidebar {
-            transform: translateX(-100%);
-        }
-        body.focus-mode .progress-container {
-            left: 0;
-            width: 100%;
-        }
+
+        body.focus-mode .sidebar { transform: translateX(-100%); }
 
         .brand {
             font-weight: 800;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: var(--gold);
-            margin-bottom: 20px;
+            margin-bottom: 18px;
             display: flex;
             align-items: center;
             gap: 10px;
+            letter-spacing: -0.2px;
+        }
+
+        .brand .brand-sub {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 400;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
         }
 
         .lesson-nav {
-            padding: 14px;
+            padding: 13px 14px;
             border-radius: 12px;
             background: var(--bg-card);
             border: 1px solid var(--border-color);
@@ -111,56 +133,84 @@
             transition: all 0.2s;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 11px;
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
+            text-decoration: none;
+            color: var(--text-main);
+            user-select: none;
         }
-        
+
         .lesson-nav.active {
             border-color: var(--gold);
             background: var(--gold-dim);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.03);
         }
 
         .lesson-nav.locked {
-            opacity: 0.5;
+            opacity: 0.45;
             cursor: not-allowed;
             background: transparent;
         }
 
-        .lesson-nav:hover:not(.locked) {
-            transform: translateY(-2px);
+        .lesson-nav:not(.locked):hover {
+            transform: translateX(3px);
             border-color: var(--gold);
         }
 
+        .lesson-nav .nav-label { flex: 1; }
+
         .locked-date {
             display: block;
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             font-weight: 400;
             color: var(--text-muted);
-            margin-top: 4px;
+            margin-top: 3px;
         }
 
-        /* Main Content */
-        .main-wrapper {
-            margin-left: var(--sidebar-width);
-            min-height: 100vh;
-            transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        .nav-check { color: var(--gold); font-size: 0.9rem; }
+
+        .sidebar-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 6px 0;
         }
 
-        body.focus-mode .main-wrapper {
-            margin-left: 0;
-        }
-
+        /* ───── TOPBAR ───── */
         .topbar {
-            padding: 20px 40px;
-            display: flex;
-            justify-content: flex-end;
-            gap: 15px;
             position: sticky;
-            top: 4px;
-            background: linear-gradient(to bottom, var(--bg-dark) 60%, transparent);
+            top: 3px;
             z-index: 90;
+            padding: 12px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(to bottom, var(--bg-dark) 55%, transparent);
+        }
+
+        .topbar-left { display: flex; align-items: center; gap: 10px; }
+        .topbar-right { display: flex; align-items: center; gap: 10px; }
+
+        .hamburger {
+            display: none;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+            line-height: 1;
+        }
+        .hamburger:hover { border-color: var(--gold); color: var(--gold); }
+
+        .reading-time {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .btn {
@@ -172,338 +222,468 @@
             cursor: pointer;
             font-family: inherit;
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             transition: all 0.2s;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 7px;
+            white-space: nowrap;
         }
-
         .btn:hover {
             border-color: var(--gold);
             color: var(--gold);
             background: var(--gold-dim);
         }
-
-        .btn.primary {
-            background: var(--gold);
-            color: #000;
+        .btn.active-btn {
             border-color: var(--gold);
+            color: var(--gold);
+            background: var(--gold-dim);
         }
-        .btn.primary:hover {
-            background: var(--gold-hover);
-            color: #000;
-            box-shadow: 0 0 15px var(--gold-dim);
+
+        /* ───── MAIN CONTENT ───── */
+        .main-wrapper {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left var(--transition);
         }
+        body.focus-mode .main-wrapper { margin-left: 0; }
+        body.focus-mode .progress-container { left: 0; width: 100%; }
 
         .content {
-            max-width: 800px;
+            max-width: 780px;
             margin: 0 auto;
-            padding: 20px 40px 100px;
+            padding: 20px 40px 120px;
         }
 
-        /* Content Formatting (ADHD Friendly) */
+        /* Page load animation */
+        .content > * {
+            animation: fadeUp 0.5s ease both;
+        }
+        .content > *:nth-child(1) { animation-delay: 0.05s; }
+        .content > *:nth-child(2) { animation-delay: 0.1s; }
+        .content > *:nth-child(3) { animation-delay: 0.15s; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Scroll-reveal for cards */
+        .card, .quiz-question {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .card.revealed, .quiz-question.revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ───── TITLE BLOCK ───── */
         .title-block {
             text-align: center;
-            margin-bottom: 60px;
+            margin-bottom: 56px;
+            padding-top: 10px;
         }
-
-        .title-block h1 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin-bottom: 10px;
-            line-height: 1.2;
-        }
-
-        .title-block h2 {
-            color: var(--gold);
-            font-size: 1.2rem;
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        .quote {
-            border-left: 4px solid var(--gold);
+        .issue-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
             background: var(--gold-dim);
-            padding: 20px 30px;
-            border-radius: 0 12px 12px 0;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+            padding: 5px 14px;
+            border-radius: 99px;
+            margin-bottom: 18px;
+        }
+        .title-block h1 {
+            font-size: clamp(1.8rem, 4vw, 2.6rem);
+            font-weight: 800;
+            line-height: 1.2;
+            letter-spacing: -0.5px;
+            margin-bottom: 14px;
+        }
+        .title-meta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+        }
+        .title-meta span { display: flex; align-items: center; gap: 5px; }
+
+        /* ───── QUOTE ───── */
+        .quote {
+            border-left: 3px solid var(--gold);
+            background: var(--gold-dim);
+            padding: 20px 28px;
+            border-radius: 0 14px 14px 0;
             font-style: italic;
             color: var(--gold);
-            font-size: 1.1rem;
-            margin: 0 0 40px 0;
+            font-size: 1.05rem;
+            margin: 0 0 44px 0;
+            line-height: 1.65;
+        }
+        .quote cite {
+            display: block;
+            font-style: normal;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 10px;
+            font-weight: 600;
         }
 
-        /* ADHD "Chunking" using distinct cards */
+        /* ───── CARDS ───── */
         .card {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            transition: transform 0.2s, border-color 0.2s;
+            border-radius: 18px;
+            padding: 30px 32px;
+            margin-bottom: 28px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s, opacity 0.5s, transform 0.5s;
         }
-
         .card:hover {
-            border-color: var(--gold-dim);
-            transform: translateY(-2px);
+            border-color: rgba(197,160,101,0.35);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
         }
-
         .card h3 {
-            margin-top: 0;
             color: var(--gold);
-            font-size: 1.4rem;
+            font-size: 1.25rem;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 11px;
             border-bottom: 1px solid var(--border-color);
-            padding-bottom: 15px;
+            padding-bottom: 14px;
             margin-bottom: 20px;
+            font-weight: 800;
         }
 
-        p {
-            margin-bottom: 1.5rem;
-            color: var(--text-muted);
-        }
+        p { margin-bottom: 1.4rem; color: var(--text-muted); }
+        p:last-child { margin-bottom: 0; }
 
-        strong, mark {
-            color: var(--text-main);
-            font-weight: 600;
-        }
+        strong { color: var(--text-main); font-weight: 600; }
 
         mark {
             background: var(--gold-dim);
-            padding: 2px 6px;
-            border-radius: 4px;
+            padding: 2px 7px;
+            border-radius: 5px;
             color: var(--gold);
+            font-weight: 600;
         }
 
         ul, ol {
             color: var(--text-muted);
-            padding-left: 20px;
-            margin-bottom: 1.5rem;
+            padding-left: 22px;
+            margin-bottom: 1.4rem;
         }
+        li { margin-bottom: 9px; }
+        li strong { color: var(--text-main); }
 
-        li {
-            margin-bottom: 10px;
-        }
-
-        /* Tables */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 1.5rem;
-            background: var(--bg-dark);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        th, td {
-            padding: 12px 16px;
-            text-align: left;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        th {
-            background: var(--gold-dim);
-            color: var(--gold);
-            font-weight: 600;
-        }
-
-        /* Code Blocks */
-        pre {
-            background: #111 !important;
-            border-radius: 12px !important;
-            padding: 20px !important;
+        code {
+            background: rgba(255,255,255,0.05);
             border: 1px solid var(--border-color);
-            font-size: 0.9rem;
-            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
-            margin-bottom: 1.5rem !important;
+            padding: 2px 7px;
+            border-radius: 5px;
+            font-size: 0.88em;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            color: #e2b96a;
         }
+        body.light-mode code { background: rgba(0,0,0,0.05); color: #9a6b1e; }
 
-        /* Interactive Quiz Styles */
+        /* ───── TABLES ───── */
+        .table-wrap { overflow-x: auto; margin-bottom: 1.4rem; border-radius: 10px; border: 1px solid var(--border-color); }
+        table { width: 100%; border-collapse: collapse; background: var(--bg-dark); }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        tr:last-child td { border-bottom: none; }
+        th { background: var(--gold-dim); color: var(--gold); font-weight: 700; font-size: 0.88rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        td code { font-size: 0.82em; }
+
+        /* ───── QUIZ ───── */
         .quiz-section {
-            margin-top: 60px;
-            border-top: 2px dashed var(--border-color);
-            padding-top: 40px;
+            margin-top: 64px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 48px;
+        }
+        .quiz-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .quiz-header .issue-badge { margin-bottom: 14px; }
+        .quiz-header h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -0.3px;
         }
 
         .quiz-question {
-            margin-bottom: 30px;
+            margin-bottom: 24px;
             background: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 30px;
+            border-radius: 18px;
+            padding: 28px 30px;
+            transition: opacity 0.5s ease, transform 0.5s ease;
         }
-
-        .quiz-question p {
+        .quiz-question .q-text {
             color: var(--text-main);
-            font-weight: 600;
-            font-size: 1.1rem;
-            margin-top: 0;
-            margin-bottom: 15px;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 16px;
         }
-
-        .options {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
+        .options { display: flex; flex-direction: column; gap: 9px; }
         .option-btn {
             background: var(--bg-dark);
             border: 1px solid var(--border-color);
             color: var(--text-muted);
-            padding: 15px 20px;
+            padding: 14px 18px;
             border-radius: 10px;
             text-align: left;
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-family: inherit;
             transition: all 0.2s;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 12px;
         }
-
         .option-btn:hover:not(.disabled) {
             background: var(--gold-dim);
             border-color: var(--gold);
             color: var(--text-main);
+            transform: translateX(3px);
         }
-
-        .option-btn.correct {
-            background: rgba(34, 197, 94, 0.1);
-            border-color: #22c55e;
-            color: #22c55e;
-        }
-
-        .option-btn.wrong {
-            background: rgba(239, 68, 68, 0.1);
-            border-color: #ef4444;
-            color: #ef4444;
-        }
-
-        .option-btn.disabled {
-            cursor: default;
-            opacity: 0.7;
-        }
+        .option-btn.correct { background: rgba(34,197,94,0.1); border-color: #22c55e; color: #22c55e; }
+        .option-btn.wrong   { background: rgba(239,68,68,0.1);  border-color: #ef4444; color: #ef4444; }
+        .option-btn.disabled { cursor: default; }
 
         .quiz-score {
             display: none;
             text-align: center;
-            padding: 30px;
+            padding: 36px;
             background: var(--gold-dim);
-            border-radius: 16px;
+            border-radius: 18px;
             border: 1px solid var(--gold);
-            margin-top: 30px;
-            animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            margin-top: 28px;
+            animation: bounceIn 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
+        .quiz-score .score-num { font-size: 3rem; font-weight: 800; color: var(--gold); line-height: 1; margin-bottom: 8px; }
+        .quiz-score h2 { font-size: 1.3rem; color: var(--text-main); margin-bottom: 8px; }
+        .quiz-score p { color: var(--text-muted); margin: 0; font-size: 0.95rem; }
 
         @keyframes bounceIn {
-            0% { transform: scale(0.8); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
+            0%   { transform: scale(0.75); opacity: 0; }
+            70%  { transform: scale(1.05); }
+            100% { transform: scale(1);    opacity: 1; }
         }
 
-        .quiz-score h2 {
-            margin: 0 0 10px 0;
-            color: var(--gold);
-            font-size: 2rem;
-        }
-
-        .quiz-score p {
-            margin: 0;
-            color: var(--text-main);
+        /* ───── BACK TO TOP ───── */
+        .back-to-top {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 1.1rem;
+            transition: all 0.25s;
+            opacity: 0;
+            transform: translateY(10px);
+            pointer-events: none;
+            z-index: 80;
+        }
+        .back-to-top.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        .back-to-top:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); transform: translateY(-2px); }
+
+        /* ───── TOAST ───── */
+        .toast {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 12px 22px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            z-index: 500;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* ───── KEYBOARD HINT ───── */
+        .kbd-hint {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            margin-top: -10px;
+            margin-bottom: 24px;
+            opacity: 0.6;
+        }
+        .kbd {
+            display: inline-block;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-size: 0.72rem;
+            font-family: monospace;
         }
 
+        /* ───── RESPONSIVE ───── */
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); }
-            .main-wrapper { margin-left: 0; }
-            .content { padding: 20px; }
-            .topbar { padding: 10px 20px; }
-            .progress-container { left: 0; width: 100%; }
-            body.focus-mode .sidebar { transform: translateX(0); } /* Inverse on mobile, toggle opens menu */
+            body.sidebar-open .sidebar { transform: translateX(0); }
+            body.focus-mode .sidebar { transform: translateX(-100%); }
+
+            .main-wrapper { margin-left: 0 !important; }
+            .progress-container { left: 0 !important; width: 100% !important; }
+
+            .topbar { padding: 10px 16px; }
+            .content { padding: 16px 18px 100px; }
+
+            .hamburger { display: flex; }
+            .reading-time { display: none; }
+
+            .title-block h1 { font-size: 1.6rem; }
+            .card { padding: 22px 20px; }
+            .quiz-question { padding: 22px 20px; }
+
+            .back-to-top { bottom: 20px; right: 16px; }
+            .toast { font-size: 0.82rem; padding: 10px 16px; max-width: 85vw; white-space: normal; text-align: center; }
+        }
+
+        @media (max-width: 400px) {
+            .btn span.btn-label { display: none; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Scroll Progress -->
+    <!-- Progress Bar -->
     <div class="progress-container">
         <div class="progress-bar" id="progressBar"></div>
     </div>
 
+    <!-- Mobile Overlay -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
     <!-- Sidebar -->
-    <div class="sidebar">
+    <aside class="sidebar" id="sidebar">
         <div class="brand">
-            🏨 The Gilpin Gazette
-        </div>
-        
-        <div class="lesson-nav">
-            <span>📖</span>
+            <span>🏨</span>
             <div>
+                The Gilpin Gazette
+                <span class="brand-sub">Developer Edition</span>
+            </div>
+        </div>
+
+        <div class="lesson-nav" onclick="handleNavClick(this, false)">
+            <span>📐</span>
+            <div class="nav-label">
                 1. The Big Picture
                 <span class="locked-date">Architecture & Overview</span>
             </div>
-            <span style="margin-left: auto; color: var(--gold);">✓</span>
+            <span class="nav-check">✓</span>
         </div>
 
-        <div class="lesson-nav">
-            <span>📖</span>
-            <div>
+        <div class="lesson-nav" onclick="handleNavClick(this, false)">
+            <span>🔐</span>
+            <div class="nav-label">
                 2. Auth & Security
                 <span class="locked-date">Guarding the Kingdom</span>
             </div>
-            <span style="margin-left: auto; color: var(--gold);">✓</span>
+            <span class="nav-check">✓</span>
         </div>
 
-        <div class="lesson-nav active">
-            <span>📖</span>
-            <div>
+        <div class="lesson-nav active" onclick="handleNavClick(this, false)">
+            <span>📄</span>
+            <div class="nav-label">
                 3. The PDF Parser
                 <span class="locked-date">Turning Paper into Data</span>
             </div>
         </div>
 
-        <div class="lesson-nav locked">
+        <div class="sidebar-divider"></div>
+
+        <div class="lesson-nav locked" onclick="handleNavClick(this, true, 'Unlocks in 3 days')">
             <span>🔒</span>
-            <div>
+            <div class="nav-label">
                 4. Firebase RTDB
                 <span class="locked-date">Unlocks in 3 days</span>
             </div>
         </div>
 
-        <div class="lesson-nav locked">
+        <div class="lesson-nav locked" onclick="handleNavClick(this, true, 'Unlocks in 4 days')">
             <span>🔒</span>
-            <div>
+            <div class="nav-label">
                 5. AI / Gemini Features
                 <span class="locked-date">Unlocks in 4 days</span>
             </div>
         </div>
-    </div>
+    </aside>
 
-    <!-- Main Content -->
+    <!-- Main -->
     <div class="main-wrapper">
         <div class="topbar">
-            <button class="btn" id="focusToggle">
-                <span class="icon">🎯</span> Focus Mode
-            </button>
-            <button class="btn" id="themeToggle">
-                <span class="icon">🌓</span> Theme
-            </button>
+            <div class="topbar-left">
+                <button class="hamburger" id="hamburger" aria-label="Menu">☰</button>
+                <div class="reading-time">
+                    <span>📖</span> <span id="readingTime">5 min read</span>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <button class="btn" id="focusToggle" title="Focus Mode (F)">
+                    <span>🎯</span> <span class="btn-label">Focus</span>
+                </button>
+                <button class="btn" id="themeToggle" title="Toggle Theme (T)">
+                    <span id="themeIcon">🌙</span> <span class="btn-label">Theme</span>
+                </button>
+            </div>
         </div>
 
         <div class="content">
-            
+
             <div class="title-block">
-                <h2>Issue #3 — Sunday, 8 March 2026</h2>
-                <h1>The PDF Parser: Turning Paper into Data</h1>
+                <div class="issue-badge">📰 Issue #3 · Sunday, 8 March 2026</div>
+                <h1>The PDF Parser:<br>Turning Paper into Data</h1>
+                <div class="title-meta">
+                    <span>⏱ <span id="readingTimeInline">5 min</span></span>
+                    <span>📚 Lesson 3 of 5</span>
+                    <span>🏨 Gilpin Hotel</span>
+                </div>
             </div>
 
             <div class="quote">
                 "Data is the new oil, but raw PDFs are like unrefined crude. Our parser is the refinery that turns chaotic text into operational intelligence."
+                <cite>— Gilpin Arrivals Tool, Architecture Notes</cite>
             </div>
 
             <!-- CHUNK 1 -->
@@ -512,20 +692,20 @@
                 <p>The journey from a PDF file to a live dashboard session involves three critical stages implemented in the <code>PDFService</code>.</p>
                 <ol>
                     <li><strong>File Upload:</strong> The raw PDF is received and buffered for processing.</li>
-                    <li><strong>Raw Text Extraction:</strong> Using <code>pdfjs-dist</code>, the system extracts text while preserving <strong>positional information</strong> (coordinates).</li>
+                    <li><strong>Raw Text Extraction:</strong> Using <code>pdfjs-dist</code>, the system extracts text while preserving <strong>positional information</strong> — the X/Y coordinates of every character.</li>
                     <li><strong>Structural Synthesis:</strong> The raw strings are mapped into a <code>GuestData</code> model, identifying room numbers, names, and statuses.</li>
                 </ol>
-                <p>💡 <strong>Note:</strong> Unlike simple text scrapers, our parser understands the <em>visual layout</em> of the page.</p>
+                <p>💡 <strong>Unlike simple text scrapers</strong>, our parser understands the <em>visual layout</em> of the page — not just the words on it.</p>
             </div>
 
             <!-- CHUNK 2 -->
             <div class="card">
                 <h3>📍 Coordinate-Based Parsing</h3>
-                <p>In <code>pdfService.ts</code>, we don't just search for text; we look at <em>where</em> it is on the page.</p>
+                <p>In <code>pdfService.ts</code>, we don't just search for text — we look at <em>where</em> it sits on the page.</p>
                 <ul>
                     <li><strong>Column Mapping:</strong> Precise X/Y coordinates define where the "Room" column ends and the "Guest Name" column begins.</li>
-                    <li><strong>Horizontal Alignment:</strong> Text on the same Y-axis is grouped into a single guest record.</li>
-                    <li><strong>Resilience:</strong> This method handles PDFs with varying margins much better than simple line-by-line parsing.</li>
+                    <li><strong>Horizontal Alignment:</strong> Text sharing the same Y-axis is grouped into a single guest record.</li>
+                    <li><strong>Resilience:</strong> This method handles PDFs with varying margins far better than naive line-by-line parsing.</li>
                 </ul>
             </div>
 
@@ -533,60 +713,61 @@
             <div class="card">
                 <h3>🔍 Regex: The Pattern Matchers</h3>
                 <p>Even with coordinates, we need Regular Expressions to validate and extract specific data types.</p>
-                <table>
-                    <tr><th>Purpose</th><th>Pattern</th></tr>
-                    <tr><td><strong>Dates</strong></td><td><code>/(\d{2}\/\d{2}\/\d{4})/g</code></td></tr>
-                    <tr><td><strong>Guest Entries</strong></td><td>Matches standard arrival formats to trigger object creation.</td></tr>
-                </table>
-                <p>Regex ensures that a room number like <mark>101</mark> isn't confused with a date or a partial guest name.</p>
+                <div class="table-wrap">
+                    <table>
+                        <tr><th>Purpose</th><th>Pattern</th></tr>
+                        <tr><td><strong>Dates</strong></td><td><code>/(\d{2}\/\d{2}\/\d{4})/g</code></td></tr>
+                        <tr><td><strong>Guest Entries</strong></td><td>Matches standard arrival formats to trigger object creation.</td></tr>
+                    </table>
+                </div>
+                <p>Regex ensures that room <mark>101</mark> isn't misread as a date fragment or part of a guest name.</p>
             </div>
 
             <!-- CHUNK 4 -->
             <div class="card">
                 <h3>☕ Morning Briefing vs. Arrivals</h3>
-                <p>The app actually contains two distinct parsers to handle different document types:</p>
+                <p>The app contains two distinct parsers to handle two different document types:</p>
                 <ul>
-                    <li><strong>Arrivals Parser:</strong> Focuses on individual guest records, car regs, and room assignments.</li>
-                    <li><strong>Morning Briefing Parser:</strong> Focuses on high-level forecasting, restaurant diary entries, and overall hotel stats.</li>
+                    <li><strong>Arrivals Parser:</strong> Focuses on individual guest records, car registrations, and room assignments.</li>
+                    <li><strong>Morning Briefing Parser:</strong> Focuses on high-level forecasting, restaurant diary entries, and overall hotel statistics.</li>
                 </ul>
-                <p>Each uses a unique set of regex rules and coordinate maps tailored to the document's specific design.</p>
+                <p>Each uses a unique set of regex rules and coordinate maps tailored to its document's specific layout.</p>
             </div>
 
             <!-- CHUNK 5 -->
             <div class="card">
                 <h3>🏗️ Session Management & Sync</h3>
-                <p>Once parsed, the data is pushed to <strong>Firebase Realtime Database</strong> to create a collaborative session.</p>
-                <p><strong>The Sync Logic:</strong></p>
+                <p>Once parsed, data is pushed to <strong>Firebase Realtime Database</strong> to create a collaborative session.</p>
                 <ol>
-                    <li><strong>Unique ID:</strong> Sessions are keyed by the arrival date.</li>
-                    <li><strong>Presence:</strong> <code>/presence/{sessionId}</code> tracks who is currently viewing the data.</li>
-                    <li><strong>Locking:</strong> Admins can "Lock" a session, which updates a flag in RTDB to prevent further edits after the morning handover.</li>
+                    <li><strong>Unique Key:</strong> Sessions are keyed by the arrival date — one session per day.</li>
+                    <li><strong>Presence:</strong> <code>/presence/{sessionId}</code> tracks who is currently viewing.</li>
+                    <li><strong>Locking:</strong> Admins can "Lock" a session, setting a flag in RTDB to prevent further edits after morning handover.</li>
                 </ol>
             </div>
 
             <!-- CHUNK 6 -->
             <div class="card">
-                <h3>⚠️ Common Failure Modes</h3>
-                <p>Parsing isn't magic. When data goes missing, it's usually due to one of these "The Big Three" issues:</p>
+                <h3>⚠️ The Big Three: Common Failure Modes</h3>
+                <p>Parsing isn't magic. When data goes missing, it's almost always one of these:</p>
                 <ul>
-                    <li><strong>Format Inconsistency:</strong> The PMS exports a PDF with slightly shifted columns, causing coordinate misses.</li>
-                    <li><strong>Regex Failure:</strong> A guest has a name or note that doesn't match the expected pattern.</li>
-                    <li><strong>Sync Lag:</strong> Large PDFs (100+ guests) hitting the database simultaneously can cause temporary UI stutters.</li>
+                    <li><strong>Format Inconsistency:</strong> The PMS exports a PDF with slightly shifted columns, causing coordinate misses. <mark>Most common.</mark></li>
+                    <li><strong>Regex Failure:</strong> A guest has an unusual name or note that doesn't match the expected pattern.</li>
+                    <li><strong>Sync Lag:</strong> Large PDFs (100+ guests) hitting Firebase simultaneously can cause temporary UI stutters.</li>
                 </ul>
             </div>
 
-
-            <!-- INTERACTIVE QUIZ -->
+            <!-- QUIZ -->
             <div class="quiz-section" id="quiz-anchor">
-                <div class="title-block" style="margin-bottom: 30px;">
-                    <h2>Knowledge Check</h2>
-                    <h1 style="font-size: 1.8rem;">Data Pipeline Mastery</h1>
+                <div class="quiz-header">
+                    <div class="issue-badge">✏️ Knowledge Check</div>
+                    <h2>Data Pipeline Mastery</h2>
                 </div>
 
-                <div class="quiz-container" id="quizContainer">
-                    <!-- Q1 -->
+                <p class="kbd-hint">Tip: use <span class="kbd">F</span> for focus mode · <span class="kbd">T</span> to toggle theme</p>
+
+                <div id="quizContainer">
                     <div class="quiz-question" data-answer="2">
-                        <p>1. Which library is used for the raw text extraction from PDF files?</p>
+                        <p class="q-text">1. Which library handles the raw text extraction from PDF files?</p>
                         <div class="options">
                             <button class="option-btn" data-index="0">A) PDF-Lib</button>
                             <button class="option-btn" data-index="1">B) Axios</button>
@@ -595,9 +776,8 @@
                         </div>
                     </div>
 
-                    <!-- Q2 -->
                     <div class="quiz-question" data-answer="1">
-                        <p>2. What core technique does pdfService.ts use to distinguish between different columns?</p>
+                        <p class="q-text">2. What core technique does <code>pdfService.ts</code> use to distinguish between columns?</p>
                         <div class="options">
                             <button class="option-btn" data-index="0">A) Counting spaces between words</button>
                             <button class="option-btn" data-index="1">B) Coordinate-based parsing (X/Y positioning)</button>
@@ -606,9 +786,8 @@
                         </div>
                     </div>
 
-                    <!-- Q3 -->
                     <div class="quiz-question" data-answer="3">
-                        <p>3. What regex pattern is used to extract dates (DD/MM/YYYY) from the text?</p>
+                        <p class="q-text">3. What regex pattern extracts dates in DD/MM/YYYY format?</p>
                         <div class="options">
                             <button class="option-btn" data-index="0">A) /[A-Z]+/g</button>
                             <button class="option-btn" data-index="1">B) /\d{3}/g</button>
@@ -617,20 +796,18 @@
                         </div>
                     </div>
 
-                    <!-- Q4 -->
                     <div class="quiz-question" data-answer="0">
-                        <p>4. How does the Morning Briefing parser differ from the standard Arrivals parser?</p>
+                        <p class="q-text">4. What is the main focus of the Morning Briefing parser?</p>
                         <div class="options">
-                            <button class="option-btn" data-index="0">A) It focuses on forecasting and restaurant diary entries</button>
+                            <button class="option-btn" data-index="0">A) Forecasting and restaurant diary entries</button>
                             <button class="option-btn" data-index="1">B) It doesn't use regex</button>
                             <button class="option-btn" data-index="2">C) It only handles Excel files</button>
                             <button class="option-btn" data-index="3">D) It is only available to Admin roles</button>
                         </div>
                     </div>
 
-                    <!-- Q5 -->
                     <div class="quiz-question" data-answer="2">
-                        <p>5. What is a "common failure mode" for the PDF parser?</p>
+                        <p class="q-text">5. What is the most common failure mode for the PDF parser?</p>
                         <div class="options">
                             <button class="option-btn" data-index="0">A) Firebase being offline</button>
                             <button class="option-btn" data-index="1">B) Running out of disk space</button>
@@ -641,93 +818,165 @@
                 </div>
 
                 <div class="quiz-score" id="quizScore">
-                    <h2>🎉 Data Pipeline Expert!</h2>
-                    <p>Lesson 3 complete. You've mastered the flow of information.</p>
+                    <div class="score-num" id="scoreFinal">5/5</div>
+                    <h2 id="scoreTitle">🎉 Data Pipeline Expert!</h2>
+                    <p id="scoreText">Lesson 3 complete. You've mastered the flow of information.</p>
                 </div>
-
             </div>
 
         </div>
     </div>
 
+    <!-- Back to Top -->
+    <button class="back-to-top" id="backToTop" title="Back to top" aria-label="Back to top">↑</button>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/prism.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/components/prism-typescript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/components/prism-jsx.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/components/prism-json.min.js"></script>
-    
+
     <script>
-        // Scroll Progress Bar
+        // ── READING TIME ──────────────────────────────
+        const wordCount = document.querySelector('.content').innerText.split(/\s+/).length;
+        const mins = Math.max(1, Math.round(wordCount / 220));
+        document.getElementById('readingTime').textContent = mins + ' min read';
+        document.getElementById('readingTimeInline').textContent = mins + ' min';
+
+        // ── SCROLL PROGRESS ───────────────────────────
         window.addEventListener('scroll', () => {
-            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const scroll = document.documentElement.scrollTop;
             const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            const scrolled = (winScroll / height) * 100;
-            document.getElementById('progressBar').style.width = scrolled + '%';
+            document.getElementById('progressBar').style.width = ((scroll / height) * 100) + '%';
+            document.getElementById('backToTop').classList.toggle('visible', scroll > 400);
+        }, { passive: true });
+
+        // ── BACK TO TOP ───────────────────────────────
+        document.getElementById('backToTop').addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
 
-        // Focus Mode Toggle
+        // ── SCROLL REVEAL ─────────────────────────────
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('revealed');
+                    revealObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+        document.querySelectorAll('.card, .quiz-question').forEach((el, i) => {
+            el.style.transitionDelay = (i % 4) * 0.06 + 's';
+            revealObserver.observe(el);
+        });
+
+        // ── HAMBURGER (mobile) ────────────────────────
+        const hamburger  = document.getElementById('hamburger');
+        const overlay    = document.getElementById('overlay');
+        const sidebar    = document.getElementById('sidebar');
+
+        function closeSidebar() { document.body.classList.remove('sidebar-open'); }
+        hamburger.addEventListener('click', () => document.body.classList.toggle('sidebar-open'));
+        overlay.addEventListener('click', closeSidebar);
+
+        // ── FOCUS MODE ────────────────────────────────
         const focusToggle = document.getElementById('focusToggle');
+        const focusActive = localStorage.getItem('focusMode') === '1';
+        if (focusActive) { document.body.classList.add('focus-mode'); focusToggle.classList.add('active-btn'); }
+
         focusToggle.addEventListener('click', () => {
             document.body.classList.toggle('focus-mode');
-            if (document.body.classList.contains('focus-mode')) {
-                focusToggle.innerHTML = '<span class="icon">📖</span> Show Menu';
-            } else {
-                focusToggle.innerHTML = '<span class="icon">🎯</span> Focus Mode';
-            }
+            const on = document.body.classList.contains('focus-mode');
+            focusToggle.classList.toggle('active-btn', on);
+            localStorage.setItem('focusMode', on ? '1' : '0');
+            showToast(on ? '🎯 Focus mode on' : '📖 Focus mode off');
+            if (on) closeSidebar();
         });
 
-        // Theme Toggle
+        // ── THEME TOGGLE ──────────────────────────────
         const themeToggle = document.getElementById('themeToggle');
+        const themeIcon   = document.getElementById('themeIcon');
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.add('light-mode');
+            themeIcon.textContent = '☀️';
+        }
         themeToggle.addEventListener('click', () => {
             document.body.classList.toggle('light-mode');
+            const light = document.body.classList.contains('light-mode');
+            themeIcon.textContent = light ? '☀️' : '🌙';
+            localStorage.setItem('theme', light ? 'light' : 'dark');
         });
 
-        // Interactive Quiz Logic
-        let score = 0;
-        let answeredQuestions = 0;
-        const totalQuestions = document.querySelectorAll('.quiz-question').length;
+        // ── KEYBOARD SHORTCUTS ────────────────────────
+        document.addEventListener('keydown', e => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            if (e.key === 'f' || e.key === 'F') focusToggle.click();
+            if (e.key === 't' || e.key === 'T') themeToggle.click();
+            if (e.key === 'Escape') closeSidebar();
+        });
+
+        // ── NAV CLICK HANDLER ─────────────────────────
+        function handleNavClick(el, locked, msg) {
+            if (locked) {
+                showToast('🔒 ' + msg);
+                return;
+            }
+            // Close sidebar on mobile after nav
+            if (window.innerWidth <= 768) closeSidebar();
+        }
+
+        // ── TOAST ─────────────────────────────────────
+        let toastTimer;
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
+        }
+
+        // ── QUIZ ──────────────────────────────────────
+        let score = 0, answered = 0;
+        const total = document.querySelectorAll('.quiz-question').length;
 
         document.querySelectorAll('.quiz-question').forEach(question => {
-            const correctAnswer = parseInt(question.getAttribute('data-answer'));
-            const options = question.querySelectorAll('.option-btn');
+            const correct = parseInt(question.getAttribute('data-answer'));
+            const options  = question.querySelectorAll('.option-btn');
 
             options.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    // Prevent double answering
-                    if (this.parentElement.querySelector('.disabled')) return;
+                btn.addEventListener('click', function () {
+                    if (question.dataset.answered) return;
+                    question.dataset.answered = '1';
 
-                    const selectedAnswer = parseInt(this.getAttribute('data-index'));
-                    
-                    // Disable all options in this question
+                    const chosen = parseInt(this.getAttribute('data-index'));
                     options.forEach(o => o.classList.add('disabled'));
 
-                    if (selectedAnswer === correctAnswer) {
+                    if (chosen === correct) {
                         this.classList.add('correct');
                         this.innerHTML += ' <span>✅</span>';
                         score++;
                     } else {
                         this.classList.add('wrong');
                         this.innerHTML += ' <span>❌</span>';
-                        // Highlight correct one
-                        options[correctAnswer].classList.add('correct');
-                        options[correctAnswer].classList.remove('disabled'); // keep it slightly vibrant
+                        options[correct].classList.add('correct');
+                        options[correct].innerHTML += ' <span>✅</span>';
                     }
 
-                    answeredQuestions++;
+                    answered++;
 
-                    // Check if quiz is complete
-                    if (answeredQuestions === totalQuestions) {
+                    if (answered === total) {
                         setTimeout(() => {
-                            const scoreDiv = document.getElementById('quizScore');
-                            scoreDiv.style.display = 'block';
-                            
-                            if (score === totalQuestions) {
-                                scoreDiv.innerHTML = `<h2>🎉 Data Pipeline Expert! (${score}/${totalQuestions})</h2><p>Lesson 3 complete. You've mastered the flow of information.</p>`;
-                                fireConfetti();
-                            } else {
-                                scoreDiv.innerHTML = `<h2>Keep Studying! (${score}/${totalQuestions})</h2><p>Review the pipeline details above. You've still completed Lesson 3.</p>`;
-                            }
-                            
-                            scoreDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            const box    = document.getElementById('quizScore');
+                            const pct    = score / total;
+                            let title, text;
+
+                            if (pct === 1)       { title = '🎉 Data Pipeline Expert!';   text = 'Perfect score. Lesson 3 complete.'; fireConfetti(); }
+                            else if (pct >= 0.6) { title = '👍 Solid Understanding';     text = 'Almost there — review the missed topics above.'; }
+                            else                 { title = '📖 Keep Studying';            text = 'Re-read the pipeline cards above before moving on.'; }
+
+                            document.getElementById('scoreFinal').textContent = score + '/' + total;
+                            document.getElementById('scoreTitle').textContent = title;
+                            document.getElementById('scoreText').textContent  = text;
+                            box.style.display = 'block';
+                            box.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }, 500);
                     }
                 });
@@ -735,24 +984,15 @@
         });
 
         function fireConfetti() {
-            var duration = 3 * 1000;
-            var animationEnd = Date.now() + duration;
-            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
-
-            function randomInRange(min, max) {
-                return Math.random() * (max - min) + min;
-            }
-
-            var interval = setInterval(function() {
-                var timeLeft = animationEnd - Date.now();
-
-                if (timeLeft <= 0) {
-                    return clearInterval(interval);
-                }
-
-                var particleCount = 50 * (timeLeft / duration);
-                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+            const end = Date.now() + 3000;
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+            const rand = (min, max) => Math.random() * (max - min) + min;
+            const iv = setInterval(() => {
+                const left = end - Date.now();
+                if (left <= 0) return clearInterval(iv);
+                const n = 50 * (left / 3000);
+                confetti({ ...defaults, particleCount: n, origin: { x: rand(0.1, 0.3), y: Math.random() - 0.2 }, colors: ['#c5a065','#e8c98a','#ffffff'] });
+                confetti({ ...defaults, particleCount: n, origin: { x: rand(0.7, 0.9), y: Math.random() - 0.2 }, colors: ['#c5a065','#e8c98a','#ffffff'] });
             }, 250);
         }
     </script>

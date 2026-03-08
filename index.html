@@ -547,28 +547,31 @@
                     </ul>
                 </div>
 
-                <div class="card">
-                    <h3>🎭 Role-Based Access Control (RBAC)</h3>
-                    <p>Not all staff are equal. The tool enforces roles using <strong>Firebase Custom Claims</strong> — metadata attached to the user's JWT token at the server level.</p>
+                                <div class="card">
+                    <h3>?? Role-Based Access Control (RBAC)</h3>
+                    <p>Not all staff are equal. The tool enforces roles using <strong>Firebase Custom Claims</strong> � metadata attached to the user's JWT token at the server level.</p>
                     <div class="table-wrap">
                         <table>
                             <tr><th>Role</th><th>Can View</th><th>Can Edit</th><th>Can Lock</th></tr>
-                            <tr><td><mark>Admin</mark></td><td>✅</td><td>✅</td><td>✅</td></tr>
-                            <tr><td>Staff</td><td>✅</td><td>✅</td><td>❌</td></tr>
-                            <tr><td>Viewer</td><td>✅</td><td>❌</td><td>❌</td></tr>
+                            <tr><td><mark>Admin</mark></td><td>?</td><td>?</td><td>?</td></tr>
+                            <tr><td>Staff</td><td>?</td><td>?</td><td>?</td></tr>
+                            <tr><td>Viewer</td><td>? (Revoked)</td><td>?</td><td>?</td></tr>
                         </table>
                     </div>
+                    <p><em>Note: Viewer access was recently revoked at the database level. Only explicitly designated Staff and Admins can view session data now.</em></p>
+                    <p>Custom claims are set via the <strong>Firebase Admin SDK</strong> and are verified on both the client and in Firebase Security Rules � so they cannot be spoofed.</p>
+                </div>
                     <p>Custom claims are set via the <strong>Firebase Admin SDK</strong> and are verified on both the client and in Firebase Security Rules — so they cannot be spoofed.</p>
                 </div>
 
-                <div class="card">
-                    <h3>🛡️ Firebase Security Rules</h3>
-                    <p>The Realtime Database is locked down by rules that run <em>server-side</em>. Even if someone bypasses the UI, the database won't cooperate.</p>
+                                <div class="card">
+                    <h3>??? Firebase Security Rules (Recently Hardened)</h3>
+                    <p>The Realtime Database is locked down by rules that run <em>server-side</em>. Recent security audits introduced several strict enforcements:</p>
                     <ul>
-                        <li><strong>Read:</strong> Only authenticated users can read session data.</li>
-                        <li><strong>Write:</strong> Only users with <code>staff</code> or <code>admin</code> custom claims can write.</li>
-                        <li><strong>Lock:</strong> Only <code>admin</code> claim holders can set the <code>locked: true</code> flag on a session.</li>
-                        <li><strong>Presence:</strong> Any authenticated user can write to their own presence node — but not anyone else's.</li>
+                        <li><strong>Strict RBAC & Auth:</strong> All read and write operations explicitly require <code>auth != null</code> AND <code>auth.token.email != null</code> (blocking anonymous auth completely), AND the role must be exactly <code>staff</code> or <code>admin</code>.</li>
+                        <li><strong>Payload Validation:</strong> Every single field (like guest notes, room names, etc.) is strictly validated for type and length (e.g., <code>newData.isString() && newData.val().length <= 5000</code>) to prevent payload injection or database bloat.</li>
+                        <li><strong>Asymmetric Access:</strong> Nodes like <code>heartbeat</code> are write-only (reads are blocked to prevent scraping), while <code>analytics.snapshots</code> are read-only (prevents client-side tampering).</li>
+                        <li><strong>Default Deny:</strong> A catch-all <code>$other</code> rule explicitly blocks any reads or writes to undefined nodes.</li>
                     </ul>
                 </div>
 
@@ -984,3 +987,5 @@
     </script>
 </body>
 </html>
+
+

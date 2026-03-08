@@ -450,19 +450,20 @@
             <span style="margin-left: auto; color: var(--gold);">✓</span>
         </div>
 
-        <div class="lesson-nav active">
+        <div class="lesson-nav">
             <span>📖</span>
             <div>
                 2. Auth & Security
                 <span class="locked-date">Guarding the Kingdom</span>
             </div>
+            <span style="margin-left: auto; color: var(--gold);">✓</span>
         </div>
-        
-        <div class="lesson-nav locked">
-            <span>🔒</span>
+
+        <div class="lesson-nav active">
+            <span>📖</span>
             <div>
                 3. The PDF Parser
-                <span class="locked-date">Unlocks in 2 days</span>
+                <span class="locked-date">Turning Paper into Data</span>
             </div>
         </div>
 
@@ -497,88 +498,80 @@
         <div class="content">
             
             <div class="title-block">
-                <h2>Issue #2 — Saturday, 7 March 2026</h2>
-                <h1>Auth & Security: Guarding the Kingdom</h1>
+                <h2>Issue #3 — Sunday, 8 March 2026</h2>
+                <h1>The PDF Parser: Turning Paper into Data</h1>
             </div>
 
             <div class="quote">
-                "Security isn't a feature, it's the foundation. We don't just lock the doors; we check the ID of everyone who walks in."
+                "Data is the new oil, but raw PDFs are like unrefined crude. Our parser is the refinery that turns chaotic text into operational intelligence."
             </div>
 
             <!-- CHUNK 1 -->
             <div class="card">
-                <h3>🔐 The Multi-Layered Auth Flow</h3>
-                <p>The Gilpin Arrivals Tool uses a sophisticated hybrid authentication model to ensure both ease of use and maximum security.</p>
+                <h3>🚀 The Three-Stage Pipeline</h3>
+                <p>The journey from a PDF file to a live dashboard session involves three critical stages implemented in the <code>PDFService</code>.</p>
                 <ol>
-                    <li><strong>Initial Login:</strong> Handled by <strong>Firebase Authentication</strong> (Email/Password or Google). Access is restricted to <code>@thegilpin.co.uk</code> domains.</li>
-                    <li><strong>Token Verification:</strong> The Firebase ID Token is sent to <code>/api/validate-auth</code>.</li>
-                    <li><strong>HMAC Issuance:</strong> Once verified, the server generates an <strong>HMAC Session Token</strong>. This token is used for all subsequent internal API calls.</li>
+                    <li><strong>File Upload:</strong> The raw PDF is received and buffered for processing.</li>
+                    <li><strong>Raw Text Extraction:</strong> Using <code>pdfjs-dist</code>, the system extracts text while preserving <strong>positional information</strong> (coordinates).</li>
+                    <li><strong>Structural Synthesis:</strong> The raw strings are mapped into a <code>GuestData</code> model, identifying room numbers, names, and statuses.</li>
                 </ol>
-                <p>🔥 <strong>Pro Tip:</strong> This "Double-Lock" mechanism ensures that even if a client-side Firebase session persists, the API access requires a fresh, server-validated HMAC token.</p>
+                <p>💡 <strong>Note:</strong> Unlike simple text scrapers, our parser understands the <em>visual layout</em> of the page.</p>
             </div>
 
             <!-- CHUNK 2 -->
             <div class="card">
-                <h3>🛡️ HMAC Token System</h3>
-                <p>Internal API requests are secured using Hash-based Message Authentication Codes (HMAC).</p>
+                <h3>📍 Coordinate-Based Parsing</h3>
+                <p>In <code>pdfService.ts</code>, we don't just search for text; we look at <em>where</em> it is on the page.</p>
                 <ul>
-                    <li><strong>Format:</strong> <code>timestamp.hmac_hash</code></li>
-                    <li><strong>Algorithm:</strong> SHA-256 using a secret <code>AUTH_SECRET</code>.</li>
-                    <li><strong>Expiry:</strong> Tokens automatically expire after <mark>8 hours</mark>.</li>
-                    <li><strong>Security:</strong> The server uses constant-time comparison to prevent <em>timing attacks</em> during verification.</li>
+                    <li><strong>Column Mapping:</strong> Precise X/Y coordinates define where the "Room" column ends and the "Guest Name" column begins.</li>
+                    <li><strong>Horizontal Alignment:</strong> Text on the same Y-axis is grouped into a single guest record.</li>
+                    <li><strong>Resilience:</strong> This method handles PDFs with varying margins much better than simple line-by-line parsing.</li>
                 </ul>
             </div>
 
             <!-- CHUNK 3 -->
             <div class="card">
-                <h3>👥 Role-Based Access Control (RBAC)</h3>
-                <p>Not all staff members see the same data. Access is governed by both <strong>Roles</strong> and <strong>Departments</strong>.</p>
+                <h3>🔍 Regex: The Pattern Matchers</h3>
+                <p>Even with coordinates, we need Regular Expressions to validate and extract specific data types.</p>
                 <table>
-                    <tr><th>Role</th><th>Capabilities</th></tr>
-                    <tr><td><strong>Admin</strong></td><td>Full system access, user management, role assignment.</td></tr>
-                    <tr><td><strong>Staff</strong></td><td>Standard dashboard access based on department.</td></tr>
-                    <tr><td><strong>Viewer</strong></td><td>Read-only access, primarily for analytics.</td></tr>
+                    <tr><th>Purpose</th><th>Pattern</th></tr>
+                    <tr><td><strong>Dates</strong></td><td><code>/(\d{2}\/\d{2}\/\d{4})/g</code></td></tr>
+                    <tr><td><strong>Guest Entries</strong></td><td>Matches standard arrival formats to trigger object creation.</td></tr>
                 </table>
-                <p>Departments like <mark>REC</mark> (Reception), <mark>NIGHT</mark> (Night Audit), and <mark>HOD</mark> (Heads of Department) are granted <code>FULL_ACCESS</code> to all dashboard tabs.</p>
+                <p>Regex ensures that a room number like <mark>101</mark> isn't confused with a date or a partial guest name.</p>
             </div>
 
             <!-- CHUNK 4 -->
             <div class="card">
-                <h3>🕵️ GDPR & AI Anonymization</h3>
-                <p>When guest data is sent to external AI services (like Gemini), we must protect PII (Personally Identifiable Information). The <code>anonymize.ts</code> utility is the silent guardian here.</p>
-                <p><strong>The Process:</strong></p>
-                <ol>
-                    <li>Client strips sensitive fields: <code>name</code>, <code>car</code>, <code>carDetails</code>.</li>
-                    <li>Names are replaced with tokens (e.g., "Guest A").</li>
-                    <li>AI processes the "clean" data and returns structured results.</li>
-                    <li>The Client <strong>deanonymizes</strong> the results using a local name-to-token map before showing them to the user.</li>
-                </ol>
+                <h3>☕ Morning Briefing vs. Arrivals</h3>
+                <p>The app actually contains two distinct parsers to handle different document types:</p>
+                <ul>
+                    <li><strong>Arrivals Parser:</strong> Focuses on individual guest records, car regs, and room assignments.</li>
+                    <li><strong>Morning Briefing Parser:</strong> Focuses on high-level forecasting, restaurant diary entries, and overall hotel stats.</li>
+                </ul>
+                <p>Each uses a unique set of regex rules and coordinate maps tailored to the document's specific design.</p>
             </div>
 
             <!-- CHUNK 5 -->
             <div class="card">
-                <h3>🔥 Firebase Security Rules</h3>
-                <p>The Realtime Database isn't a "wild west". Access is strictly enforced via <code>database.rules.json</code>.</p>
-                <pre><code class="language-json">{
-  "sessions": {
-    "$sessionId": {
-      ".read": "auth != null && (auth.token.role === 'admin' || auth.token.role === 'staff')",
-      ".write": "auth != null && auth.token.role === 'admin'"
-    }
-  }
-}</code></pre>
-                <p>Rules verify the user's <strong>Custom Claims</strong> (set via the Admin Panel) before allowing any read/write operation.</p>
+                <h3>🏗️ Session Management & Sync</h3>
+                <p>Once parsed, the data is pushed to <strong>Firebase Realtime Database</strong> to create a collaborative session.</p>
+                <p><strong>The Sync Logic:</strong></p>
+                <ol>
+                    <li><strong>Unique ID:</strong> Sessions are keyed by the arrival date.</li>
+                    <li><strong>Presence:</strong> <code>/presence/{sessionId}</code> tracks who is currently viewing the data.</li>
+                    <li><strong>Locking:</strong> Admins can "Lock" a session, which updates a flag in RTDB to prevent further edits after the morning handover.</li>
+                </ol>
             </div>
 
             <!-- CHUNK 6 -->
             <div class="card">
-                <h3>🚦 Live Token Safety</h3>
-                <p>How does the browser get the Gemini API key without it being hardcoded? It calls <code>/api/live-token</code>.</p>
-                <p>This endpoint is the most protected in the app:</p>
+                <h3>⚠️ Common Failure Modes</h3>
+                <p>Parsing isn't magic. When data goes missing, it's usually due to one of these "The Big Three" issues:</p>
                 <ul>
-                    <li>Requires a valid <strong>HMAC Bearer token</strong>.</li>
-                    <li>Enforces <strong>Origin Validation</strong> (only allowing requests from the official app domain).</li>
-                    <li>Uses <code>Cache-Control: no-store</code> to prevent the key from being cached by proxies.</li>
+                    <li><strong>Format Inconsistency:</strong> The PMS exports a PDF with slightly shifted columns, causing coordinate misses.</li>
+                    <li><strong>Regex Failure:</strong> A guest has a name or note that doesn't match the expected pattern.</li>
+                    <li><strong>Sync Lag:</strong> Large PDFs (100+ guests) hitting the database simultaneously can cause temporary UI stutters.</li>
                 </ul>
             </div>
 
@@ -587,69 +580,69 @@
             <div class="quiz-section" id="quiz-anchor">
                 <div class="title-block" style="margin-bottom: 30px;">
                     <h2>Knowledge Check</h2>
-                    <h1 style="font-size: 1.8rem;">Security & Auth Mastery</h1>
+                    <h1 style="font-size: 1.8rem;">Data Pipeline Mastery</h1>
                 </div>
 
                 <div class="quiz-container" id="quizContainer">
                     <!-- Q1 -->
-                    <div class="quiz-question" data-answer="1">
-                        <p>1. What is the primary purpose of the anonymize.ts utility?</p>
+                    <div class="quiz-question" data-answer="2">
+                        <p>1. Which library is used for the raw text extraction from PDF files?</p>
                         <div class="options">
-                            <button class="option-btn" data-index="0">A) Encrypt data in the database</button>
-                            <button class="option-btn" data-index="1">B) Strip PII (names/cars) before AI processing</button>
-                            <button class="option-btn" data-index="2">C) Validate user passwords</button>
-                            <button class="option-btn" data-index="3">D) Generate HMAC tokens</button>
+                            <button class="option-btn" data-index="0">A) PDF-Lib</button>
+                            <button class="option-btn" data-index="1">B) Axios</button>
+                            <button class="option-btn" data-index="2">C) pdfjs-dist</button>
+                            <button class="option-btn" data-index="3">D) Puppeteer</button>
                         </div>
                     </div>
 
                     <!-- Q2 -->
-                    <div class="quiz-question" data-answer="2">
-                        <p>2. How long does an HMAC session token remain valid?</p>
+                    <div class="quiz-question" data-answer="1">
+                        <p>2. What core technique does pdfService.ts use to distinguish between different columns?</p>
                         <div class="options">
-                            <button class="option-btn" data-index="0">A) 1 hour</button>
-                            <button class="option-btn" data-index="1">B) 24 hours</button>
-                            <button class="option-btn" data-index="2">C) 8 hours</button>
-                            <button class="option-btn" data-index="3">D) Until the user logs out</button>
+                            <button class="option-btn" data-index="0">A) Counting spaces between words</button>
+                            <button class="option-btn" data-index="1">B) Coordinate-based parsing (X/Y positioning)</button>
+                            <button class="option-btn" data-index="2">C) Splitting by commas</button>
+                            <button class="option-btn" data-index="3">D) Machine Learning image recognition</button>
                         </div>
                     </div>
 
                     <!-- Q3 -->
-                    <div class="quiz-question" data-answer="0">
-                        <p>3. Which hash algorithm is used to generate the HMAC session tokens?</p>
+                    <div class="quiz-question" data-answer="3">
+                        <p>3. What regex pattern is used to extract dates (DD/MM/YYYY) from the text?</p>
                         <div class="options">
-                            <button class="option-btn" data-index="0">A) SHA-256</button>
-                            <button class="option-btn" data-index="1">B) MD5</button>
-                            <button class="option-btn" data-index="2">C) bcrypt</button>
-                            <button class="option-btn" data-index="3">D) AES-128</button>
+                            <button class="option-btn" data-index="0">A) /[A-Z]+/g</button>
+                            <button class="option-btn" data-index="1">B) /\d{3}/g</button>
+                            <button class="option-btn" data-index="2">C) /date:/i</button>
+                            <button class="option-btn" data-index="3">D) /(\d{2}\/\d{2}\/\d{4})/g</button>
                         </div>
                     </div>
 
                     <!-- Q4 -->
-                    <div class="quiz-question" data-answer="3">
-                        <p>4. Where are the Firebase Realtime Database access rules defined?</p>
+                    <div class="quiz-question" data-answer="0">
+                        <p>4. How does the Morning Briefing parser differ from the standard Arrivals parser?</p>
                         <div class="options">
-                            <button class="option-btn" data-index="0">A) In the React UI code</button>
-                            <button class="option-btn" data-index="1">B) Inside the /api/ folder</button>
-                            <button class="option-btn" data-index="2">C) In constants.ts</button>
-                            <button class="option-btn" data-index="3">D) In database.rules.json</button>
+                            <button class="option-btn" data-index="0">A) It focuses on forecasting and restaurant diary entries</button>
+                            <button class="option-btn" data-index="1">B) It doesn't use regex</button>
+                            <button class="option-btn" data-index="2">C) It only handles Excel files</button>
+                            <button class="option-btn" data-index="3">D) It is only available to Admin roles</button>
                         </div>
                     </div>
 
                     <!-- Q5 -->
-                    <div class="quiz-question" data-answer="1">
-                        <p>5. What is the first step in the authentication flow?</p>
+                    <div class="quiz-question" data-answer="2">
+                        <p>5. What is a "common failure mode" for the PDF parser?</p>
                         <div class="options">
-                            <button class="option-btn" data-index="0">A) Request an HMAC token</button>
-                            <button class="option-btn" data-index="1">B) Firebase Auth login to get an ID Token</button>
-                            <button class="option-btn" data-index="2">C) Validate the origin of the request</button>
-                            <button class="option-btn" data-index="3">D) Call /api/live-token</button>
+                            <button class="option-btn" data-index="0">A) Firebase being offline</button>
+                            <button class="option-btn" data-index="1">B) Running out of disk space</button>
+                            <button class="option-btn" data-index="2">C) Format inconsistencies in the source PDF</button>
+                            <button class="option-btn" data-index="3">D) Browser theme selection</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="quiz-score" id="quizScore">
-                    <h2>🎉 Security Expert!</h2>
-                    <p>Lesson 2 complete. You've secured the kingdom.</p>
+                    <h2>🎉 Data Pipeline Expert!</h2>
+                    <p>Lesson 3 complete. You've mastered the flow of information.</p>
                 </div>
 
             </div>
@@ -728,10 +721,10 @@
                             scoreDiv.style.display = 'block';
                             
                             if (score === totalQuestions) {
-                                scoreDiv.innerHTML = `<h2>🎉 Security Expert! (${score}/${totalQuestions})</h2><p>Lesson 2 complete. You've secured the kingdom.</p>`;
+                                scoreDiv.innerHTML = `<h2>🎉 Data Pipeline Expert! (${score}/${totalQuestions})</h2><p>Lesson 3 complete. You've mastered the flow of information.</p>`;
                                 fireConfetti();
                             } else {
-                                scoreDiv.innerHTML = `<h2>Keep Studying! (${score}/${totalQuestions})</h2><p>Review the security protocols above. You've still completed Lesson 2.</p>`;
+                                scoreDiv.innerHTML = `<h2>Keep Studying! (${score}/${totalQuestions})</h2><p>Review the pipeline details above. You've still completed Lesson 3.</p>`;
                             }
                             
                             scoreDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });

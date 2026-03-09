@@ -4,15 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Gilpin Gazette — Developer Edition</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/themes/prism-tomorrow.min.css" />
+    <meta name="description" content="Developer lessons for the Gilpin Arrivals Tool">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,600;0,800;1,400&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    
+
     <style>
         :root {
             --gold: #c5a065;
             --gold-hover: #b59456;
-            --gold-dim: rgba(197, 160, 101, 0.1);
+            --gold-dim: rgba(197, 160, 101, 0.12);
+            --gold-glow: rgba(197, 160, 101, 0.25);
             --bg-dark: #0a0a0a;
             --bg-card: #141414;
             --bg-sidebar: #0f0f0f;
@@ -20,741 +21,1094 @@
             --text-muted: #94a3b8;
             --border-color: #27272a;
             --sidebar-width: 280px;
+            --transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
-
         body.light-mode {
-            --bg-dark: #f8fafc;
+            --bg-dark: #f5f5f0;
             --bg-card: #ffffff;
-            --bg-sidebar: #f1f5f9;
+            --bg-sidebar: #eeede8;
             --text-main: #0f172a;
             --text-muted: #64748b;
-            --border-color: #e2e8f0;
-            --gold-dim: rgba(197, 160, 101, 0.2);
+            --border-color: #dde1e7;
+            --gold-dim: rgba(197,160,101,0.15);
+            --gold-glow: rgba(197,160,101,0.2);
         }
-
-        * {
-            box-sizing: border-box;
-        }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
         body {
             font-family: 'Inter', system-ui, sans-serif;
-            background-color: var(--bg-dark);
+            background: var(--bg-dark);
             color: var(--text-main);
-            margin: 0;
-            line-height: 1.7;
+            line-height: 1.75;
             font-size: 17px;
             overflow-x: hidden;
-            transition: background-color 0.3s, color 0.3s;
+            transition: background 0.3s, color 0.3s;
         }
 
-        /* Scroll Progress Bar */
+        /* ── PROGRESS ─────────────────────── */
         .progress-container {
-            position: fixed;
-            top: 0;
+            position: fixed; top: 0;
             left: var(--sidebar-width);
             width: calc(100% - var(--sidebar-width));
-            height: 4px;
-            background: var(--bg-card);
-            z-index: 1000;
-            transition: left 0.4s, width 0.4s;
+            height: 3px; z-index: 300;
+            transition: left var(--transition), width var(--transition);
         }
         .progress-bar {
             height: 100%;
-            background: var(--gold);
-            width: 0%;
-            border-top-right-radius: 4px;
-            border-bottom-right-radius: 4px;
-            box-shadow: 0 0 10px var(--gold);
+            background: linear-gradient(90deg, var(--gold), #e8c98a);
+            width: 0%; border-radius: 0 2px 2px 0;
+            box-shadow: 0 0 12px var(--gold-glow);
+            transition: width 0.1s linear;
         }
 
-        /* Sidebar */
+        /* ── OVERLAY ──────────────────────── */
+        .overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(2px);
+            z-index: 99; opacity: 0; transition: opacity 0.3s;
+        }
+        body.sidebar-open .overlay { display: block; opacity: 1; }
+
+        /* ── SIDEBAR ──────────────────────── */
         .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: var(--sidebar-width);
-            height: 100vh;
-            background-color: var(--bg-sidebar);
+            position: fixed; top: 0; left: 0;
+            width: var(--sidebar-width); height: 100vh;
+            background: var(--bg-sidebar);
             border-right: 1px solid var(--border-color);
-            padding: 30px 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 100;
+            padding: 28px 18px;
+            display: flex; flex-direction: column; gap: 8px;
+            transition: transform var(--transition);
+            z-index: 100; overflow-y: auto;
         }
-        
-        body.focus-mode .sidebar {
-            transform: translateX(-100%);
-        }
-        body.focus-mode .progress-container {
-            left: 0;
-            width: 100%;
-        }
+        body.focus-mode .sidebar { transform: translateX(-100%); }
 
         .brand {
-            font-weight: 800;
-            font-size: 1.2rem;
-            color: var(--gold);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            font-weight: 800; font-size: 1.1rem;
+            color: var(--gold); margin-bottom: 16px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .brand-sub {
+            display: block; font-size: 0.72rem; font-weight: 400;
+            color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase;
         }
 
         .lesson-nav {
-            padding: 14px;
-            border-radius: 12px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-weight: 600;
-            font-size: 0.9rem;
+            padding: 13px 14px; border-radius: 12px;
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; gap: 11px;
+            font-weight: 600; font-size: 0.88rem;
+            color: var(--text-main); user-select: none;
         }
-        
         .lesson-nav.active {
-            border-color: var(--gold);
-            background: var(--gold-dim);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            border-color: var(--gold); background: var(--gold-dim);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
         }
+        .lesson-nav.locked { opacity: 0.45; cursor: not-allowed; background: transparent; }
+        .lesson-nav:not(.locked):hover { transform: translateX(3px); border-color: var(--gold); }
+        .nav-label { flex: 1; }
+        .locked-date { display: block; font-size: 0.72rem; font-weight: 400; color: var(--text-muted); margin-top: 3px; }
+        .nav-check { color: var(--gold); font-size: 0.9rem; }
+        .sidebar-divider { height: 1px; background: var(--border-color); margin: 4px 0; }
 
-        .lesson-nav.locked {
-            opacity: 0.5;
-            cursor: not-allowed;
-            background: transparent;
-        }
-
-        .lesson-nav:hover:not(.locked) {
-            transform: translateY(-2px);
-            border-color: var(--gold);
-        }
-
-        .locked-date {
-            display: block;
-            font-size: 0.75rem;
-            font-weight: 400;
-            color: var(--text-muted);
-            margin-top: 4px;
-        }
-
-        /* Main Content */
-        .main-wrapper {
-            margin-left: var(--sidebar-width);
-            min-height: 100vh;
-            transition: margin-left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        body.focus-mode .main-wrapper {
-            margin-left: 0;
-        }
-
+        /* ── TOPBAR ───────────────────────── */
         .topbar {
-            padding: 20px 40px;
-            display: flex;
-            justify-content: flex-end;
-            gap: 15px;
-            position: sticky;
-            top: 4px;
-            background: linear-gradient(to bottom, var(--bg-dark) 60%, transparent);
-            z-index: 90;
+            position: sticky; top: 3px; z-index: 90;
+            padding: 12px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: linear-gradient(to bottom, var(--bg-dark) 55%, transparent);
         }
-
+        .topbar-left { display: flex; align-items: center; gap: 10px; }
+        .topbar-right { display: flex; align-items: center; gap: 10px; }
+        .hamburger {
+            display: none; background: var(--bg-card);
+            border: 1px solid var(--border-color); color: var(--text-main);
+            border-radius: 8px; padding: 8px 12px; cursor: pointer;
+            font-size: 1.1rem; transition: all 0.2s; line-height: 1;
+        }
+        .hamburger:hover { border-color: var(--gold); color: var(--gold); }
+        .reading-time { font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
         .btn {
-            background: var(--bg-card);
-            color: var(--text-main);
+            background: var(--bg-card); color: var(--text-main);
             border: 1px solid var(--border-color);
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-family: inherit;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            padding: 8px 16px; border-radius: 8px; cursor: pointer;
+            font-family: inherit; font-weight: 600; font-size: 0.88rem;
+            transition: all 0.2s; display: flex; align-items: center; gap: 7px; white-space: nowrap;
         }
+        .btn:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
+        .btn.active-btn { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
 
-        .btn:hover {
-            border-color: var(--gold);
-            color: var(--gold);
-            background: var(--gold-dim);
+        /* ── MAIN ─────────────────────────── */
+        .main-wrapper {
+            margin-left: var(--sidebar-width); min-height: 100vh;
+            transition: margin-left var(--transition);
         }
+        body.focus-mode .main-wrapper { margin-left: 0; }
+        body.focus-mode .progress-container { left: 0; width: 100%; }
 
-        .btn.primary {
-            background: var(--gold);
-            color: #000;
-            border-color: var(--gold);
-        }
-        .btn.primary:hover {
-            background: var(--gold-hover);
-            color: #000;
-            box-shadow: 0 0 15px var(--gold-dim);
-        }
+        /* ── LESSON VIEWS ─────────────────── */
+        .lesson-view { display: none; }
+        .lesson-view.active-view { display: block; }
 
         .content {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px 40px 100px;
+            max-width: 780px; margin: 0 auto;
+            padding: 20px 40px 120px;
+        }
+        .content > * { animation: fadeUp 0.45s ease both; }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* Content Formatting (ADHD Friendly) */
-        .title-block {
-            text-align: center;
-            margin-bottom: 60px;
+        /* ── TITLE BLOCK ──────────────────── */
+        .title-block { text-align: center; margin-bottom: 52px; padding-top: 10px; }
+        .issue-badge {
+            display: inline-flex; align-items: center; gap: 7px;
+            background: var(--gold-dim); border: 1px solid var(--gold); color: var(--gold);
+            font-size: 0.78rem; font-weight: 700; letter-spacing: 1.2px;
+            text-transform: uppercase; padding: 5px 14px; border-radius: 99px; margin-bottom: 18px;
         }
-
         .title-block h1 {
-            font-size: 2.5rem;
-            font-weight: 800;
-            margin-bottom: 10px;
-            line-height: 1.2;
+            font-size: clamp(1.8rem, 4vw, 2.5rem); font-weight: 800;
+            line-height: 1.2; letter-spacing: -0.5px; margin-bottom: 14px;
         }
-
-        .title-block h2 {
-            color: var(--gold);
-            font-size: 1.2rem;
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-transform: uppercase;
+        .title-meta {
+            display: flex; align-items: center; justify-content: center;
+            gap: 16px; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap;
         }
+        .title-meta span { display: flex; align-items: center; gap: 5px; }
 
+        /* ── QUOTE ────────────────────────── */
         .quote {
-            border-left: 4px solid var(--gold);
-            background: var(--gold-dim);
-            padding: 20px 30px;
-            border-radius: 0 12px 12px 0;
-            font-style: italic;
-            color: var(--gold);
-            font-size: 1.1rem;
-            margin: 0 0 40px 0;
+            border-left: 3px solid var(--gold); background: var(--gold-dim);
+            padding: 20px 28px; border-radius: 0 14px 14px 0;
+            font-style: italic; color: var(--gold); font-size: 1.05rem; margin: 0 0 40px;
         }
+        .quote cite { display: block; font-style: normal; font-size: 0.8rem; color: var(--text-muted); margin-top: 10px; font-weight: 600; }
 
-        /* ADHD "Chunking" using distinct cards */
+        /* ── CARDS ────────────────────────── */
         .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 30px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            transition: transform 0.2s, border-color 0.2s;
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 18px; padding: 28px 30px; margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
         }
-
-        .card:hover {
-            border-color: var(--gold-dim);
-            transform: translateY(-2px);
-        }
-
+        .card:hover { border-color: rgba(197,160,101,0.35); transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.15); }
         .card h3 {
-            margin-top: 0;
-            color: var(--gold);
-            font-size: 1.4rem;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            color: var(--gold); font-size: 1.2rem; font-weight: 800;
+            display: flex; align-items: center; gap: 11px;
             border-bottom: 1px solid var(--border-color);
-            padding-bottom: 15px;
-            margin-bottom: 20px;
+            padding-bottom: 13px; margin-bottom: 18px;
         }
-
-        p {
-            margin-bottom: 1.5rem;
-            color: var(--text-muted);
+        p { margin-bottom: 1.3rem; color: var(--text-muted); }
+        p:last-child { margin-bottom: 0; }
+        strong { color: var(--text-main); font-weight: 600; }
+        mark { background: var(--gold-dim); padding: 2px 7px; border-radius: 5px; color: var(--gold); font-weight: 600; }
+        ul, ol { color: var(--text-muted); padding-left: 22px; margin-bottom: 1.3rem; }
+        li { margin-bottom: 9px; }
+        li strong { color: var(--text-main); }
+        code {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);
+            padding: 2px 7px; border-radius: 5px; font-size: 0.87em;
+            font-family: 'Fira Code', 'Courier New', monospace; color: #e2b96a;
         }
+        body.light-mode code { background: rgba(0,0,0,0.05); color: #9a6b1e; }
 
-        strong, mark {
-            color: var(--text-main);
-            font-weight: 600;
+        /* ── TABLES ───────────────────────── */
+        .table-wrap { overflow-x: auto; margin-bottom: 1.3rem; border-radius: 10px; border: 1px solid var(--border-color); }
+        table { width: 100%; border-collapse: collapse; background: var(--bg-dark); }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 0.93rem; }
+        tr:last-child td { border-bottom: none; }
+        th { background: var(--gold-dim); color: var(--gold); font-weight: 700; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* ── STACK BADGE ──────────────────── */
+        .stack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-bottom: 1.3rem; }
+        .stack-item {
+            background: var(--bg-dark); border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 12px 14px; text-align: center;
+            transition: border-color 0.2s, transform 0.2s;
         }
+        .stack-item:hover { border-color: var(--gold); transform: translateY(-2px); }
+        .stack-item .stack-icon { font-size: 1.5rem; display: block; margin-bottom: 5px; }
+        .stack-item .stack-name { font-size: 0.82rem; font-weight: 700; color: var(--text-main); display: block; }
+        .stack-item .stack-role { font-size: 0.72rem; color: var(--text-muted); display: block; }
 
-        mark {
-            background: var(--gold-dim);
-            padding: 2px 6px;
-            border-radius: 4px;
-            color: var(--gold);
+        /* ── FLOW DIAGRAM ─────────────────── */
+        .flow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 1.3rem; }
+        .flow-step {
+            background: var(--gold-dim); border: 1px solid var(--gold);
+            color: var(--gold); padding: 7px 14px; border-radius: 8px;
+            font-size: 0.82rem; font-weight: 700; white-space: nowrap;
         }
+        .flow-arrow { color: var(--text-muted); font-size: 1rem; }
 
-        ul, ol {
-            color: var(--text-muted);
-            padding-left: 20px;
-            margin-bottom: 1.5rem;
-        }
-
-        li {
-            margin-bottom: 10px;
-        }
-
-        /* Tables */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 1.5rem;
-            background: var(--bg-dark);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        th, td {
-            padding: 12px 16px;
-            text-align: left;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        th {
-            background: var(--gold-dim);
-            color: var(--gold);
-            font-weight: 600;
-        }
-
-        /* Code Blocks */
-        pre {
-            background: #111 !important;
-            border-radius: 12px !important;
-            padding: 20px !important;
-            border: 1px solid var(--border-color);
-            font-size: 0.9rem;
-            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
-            margin-bottom: 1.5rem !important;
-        }
-
-        /* Interactive Quiz Styles */
-        .quiz-section {
-            margin-top: 60px;
-            border-top: 2px dashed var(--border-color);
-            padding-top: 40px;
-        }
-
+        /* ── QUIZ ─────────────────────────── */
+        .quiz-section { margin-top: 60px; border-top: 1px solid var(--border-color); padding-top: 44px; }
+        .quiz-header { text-align: center; margin-bottom: 28px; }
+        .quiz-header h2 { font-size: 1.5rem; font-weight: 800; }
         .quiz-question {
-            margin-bottom: 30px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 30px;
+            margin-bottom: 20px; background: var(--bg-card);
+            border: 1px solid var(--border-color); border-radius: 16px; padding: 26px 28px;
         }
-
-        .quiz-question p {
-            color: var(--text-main);
-            font-weight: 600;
-            font-size: 1.1rem;
-            margin-top: 0;
-            margin-bottom: 15px;
-        }
-
-        .options {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
+        .quiz-question .q-text { color: var(--text-main); font-weight: 700; font-size: 0.98rem; margin-bottom: 14px; }
+        .options { display: flex; flex-direction: column; gap: 8px; }
         .option-btn {
-            background: var(--bg-dark);
-            border: 1px solid var(--border-color);
-            color: var(--text-muted);
-            padding: 15px 20px;
-            border-radius: 10px;
-            text-align: left;
-            cursor: pointer;
-            font-size: 1rem;
-            font-family: inherit;
-            transition: all 0.2s;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background: var(--bg-dark); border: 1px solid var(--border-color);
+            color: var(--text-muted); padding: 13px 16px; border-radius: 10px;
+            text-align: left; cursor: pointer; font-size: 0.93rem; font-family: inherit;
+            transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; gap: 12px;
         }
-
-        .option-btn:hover:not(.disabled) {
-            background: var(--gold-dim);
-            border-color: var(--gold);
-            color: var(--text-main);
-        }
-
-        .option-btn.correct {
-            background: rgba(34, 197, 94, 0.1);
-            border-color: #22c55e;
-            color: #22c55e;
-        }
-
-        .option-btn.wrong {
-            background: rgba(239, 68, 68, 0.1);
-            border-color: #ef4444;
-            color: #ef4444;
-        }
-
-        .option-btn.disabled {
-            cursor: default;
-            opacity: 0.7;
-        }
-
+        .option-btn:hover:not(.disabled) { background: var(--gold-dim); border-color: var(--gold); color: var(--text-main); transform: translateX(3px); }
+        .option-btn.correct { background: rgba(34,197,94,0.1); border-color: #22c55e; color: #22c55e; }
+        .option-btn.wrong   { background: rgba(239,68,68,0.1);  border-color: #ef4444; color: #ef4444; }
+        .option-btn.disabled { cursor: default; }
         .quiz-score {
-            display: none;
-            text-align: center;
-            padding: 30px;
-            background: var(--gold-dim);
-            border-radius: 16px;
-            border: 1px solid var(--gold);
-            margin-top: 30px;
-            animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: none; text-align: center; padding: 34px;
+            background: var(--gold-dim); border-radius: 18px; border: 1px solid var(--gold);
+            margin-top: 24px; animation: bounceIn 0.55s cubic-bezier(0.175,0.885,0.32,1.275);
+        }
+        .quiz-score .score-num { font-size: 2.8rem; font-weight: 800; color: var(--gold); line-height: 1; margin-bottom: 8px; }
+        .quiz-score h2 { font-size: 1.25rem; color: var(--text-main); margin-bottom: 6px; }
+        .quiz-score p { color: var(--text-muted); margin: 0; font-size: 0.93rem; }
+        @keyframes bounceIn { 0% { transform: scale(0.75); opacity: 0; } 70% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
+
+        /* ── LOCKED SCREEN ────────────────── */
+        .locked-screen {
+            text-align: center; padding: 80px 40px;
+            display: flex; flex-direction: column; align-items: center; gap: 16px;
+        }
+        .locked-screen .lock-icon { font-size: 3.5rem; }
+        .locked-screen h2 { font-size: 1.6rem; font-weight: 800; }
+        .locked-screen p { color: var(--text-muted); max-width: 360px; }
+        .locked-screen .countdown {
+            background: var(--gold-dim); border: 1px solid var(--gold);
+            color: var(--gold); padding: 10px 24px; border-radius: 99px;
+            font-weight: 700; font-size: 0.9rem;
         }
 
-        @keyframes bounceIn {
-            0% { transform: scale(0.8); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
+        /* ── BACK TO TOP ──────────────────── */
+        .back-to-top {
+            position: fixed; bottom: 32px; right: 32px;
+            width: 44px; height: 44px; border-radius: 12px;
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            color: var(--text-muted); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; transition: all 0.25s;
+            opacity: 0; transform: translateY(10px); pointer-events: none; z-index: 80;
         }
+        .back-to-top.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        .back-to-top:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); transform: translateY(-2px); }
 
-        .quiz-score h2 {
-            margin: 0 0 10px 0;
-            color: var(--gold);
-            font-size: 2rem;
+        /* ── TOAST ────────────────────────── */
+        .toast {
+            position: fixed; bottom: 32px; left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            color: var(--text-main); padding: 12px 22px; border-radius: 12px;
+            font-size: 0.9rem; font-weight: 600;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3); z-index: 500;
+            opacity: 0; transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            pointer-events: none; white-space: nowrap;
         }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        .quiz-score p {
-            margin: 0;
-            color: var(--text-main);
-            font-size: 1.1rem;
-        }
-
+        /* ── RESPONSIVE ───────────────────── */
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); }
-            .main-wrapper { margin-left: 0; }
-            .content { padding: 20px; }
-            .topbar { padding: 10px 20px; }
-            .progress-container { left: 0; width: 100%; }
-            body.focus-mode .sidebar { transform: translateX(0); } /* Inverse on mobile, toggle opens menu */
+            body.sidebar-open .sidebar { transform: translateX(0); }
+            body.focus-mode .sidebar { transform: translateX(-100%); }
+            .main-wrapper { margin-left: 0 !important; }
+            .progress-container { left: 0 !important; width: 100% !important; }
+            .topbar { padding: 10px 16px; }
+            .content { padding: 16px 18px 100px; }
+            .hamburger { display: flex; }
+            .reading-time { display: none; }
+            .title-block h1 { font-size: 1.5rem; }
+            .card { padding: 20px 18px; }
+            .quiz-question { padding: 20px 18px; }
+            .back-to-top { bottom: 20px; right: 16px; }
+            .toast { font-size: 0.82rem; padding: 10px 16px; max-width: 85vw; white-space: normal; text-align: center; }
+            .stack-grid { grid-template-columns: repeat(3, 1fr); }
+            .flow { gap: 4px; }
+            .flow-step { font-size: 0.75rem; padding: 6px 10px; }
+        }
+        @media (max-width: 400px) {
+            .btn span.btn-label { display: none; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Scroll Progress -->
-    <div class="progress-container">
-        <div class="progress-bar" id="progressBar"></div>
-    </div>
+    <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="overlay" id="overlay"></div>
+    <div class="toast" id="toast"></div>
 
-    <!-- Sidebar -->
-    <div class="sidebar">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
         <div class="brand">
-            🏨 The Gilpin Gazette
-        </div>
-        
-        <div class="lesson-nav">
-            <span>📖</span>
-            <div>
-                1. The Big Picture
-                <span class="locked-date">Architecture & Overview</span>
-            </div>
-            <span style="margin-left: auto; color: var(--gold);">✓</span>
+            <span>🏨</span>
+            <div>The Gilpin Gazette<span class="brand-sub">Developer Edition</span></div>
         </div>
 
-        <div class="lesson-nav">
-            <span>📖</span>
-            <div>
-                2. Auth & Security
-                <span class="locked-date">Guarding the Kingdom</span>
-            </div>
-            <span style="margin-left: auto; color: var(--gold);">✓</span>
+        <div class="lesson-nav" id="nav-1" onclick="goToLesson(1)">
+            <span>📐</span>
+            <div class="nav-label">1. The Big Picture<span class="locked-date">Architecture & Overview</span></div>
+            <span class="nav-check">✓</span>
         </div>
-
-        <div class="lesson-nav active">
-            <span>📖</span>
-            <div>
-                3. The PDF Parser
-                <span class="locked-date">Turning Paper into Data</span>
-            </div>
+        <div class="lesson-nav" id="nav-2" onclick="goToLesson(2)">
+            <span>🔐</span>
+            <div class="nav-label">2. Auth & Security<span class="locked-date">Guarding the Kingdom</span></div>
+            <span class="nav-check">✓</span>
         </div>
-
-        <div class="lesson-nav locked">
+        <div class="lesson-nav" id="nav-3" onclick="goToLesson(3)">
+            <span>📄</span>
+            <div class="nav-label">3. The PDF Parser<span class="locked-date">Turning Paper into Data</span></div>
+            <span class="nav-check">✓</span>
+        </div>
+        <div class="sidebar-divider"></div>
+        <div class="lesson-nav active" id="nav-4" onclick="goToLesson(4)">
+            <span>🔥</span>
+            <div class="nav-label">4. Firebase RTDB<span class="locked-date">The Real-Time Engine</span></div>
+        </div>
+        <div class="lesson-nav locked" id="nav-5" onclick="showLockedToast('Unlocks in 4 days')">
             <span>🔒</span>
-            <div>
-                4. Firebase RTDB
-                <span class="locked-date">Unlocks in 3 days</span>
-            </div>
+            <div class="nav-label">5. AI / Gemini Features<span class="locked-date">Unlocks in 4 days</span></div>
         </div>
+    </aside>
 
-        <div class="lesson-nav locked">
-            <span>🔒</span>
-            <div>
-                5. AI / Gemini Features
-                <span class="locked-date">Unlocks in 4 days</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Content -->
+    <!-- MAIN -->
     <div class="main-wrapper">
         <div class="topbar">
-            <button class="btn" id="focusToggle">
-                <span class="icon">🎯</span> Focus Mode
-            </button>
-            <button class="btn" id="themeToggle">
-                <span class="icon">🌓</span> Theme
-            </button>
+            <div class="topbar-left">
+                <button class="hamburger" id="hamburger">☰</button>
+                <div class="reading-time">📖 <span id="readingTime">—</span></div>
+            </div>
+            <div class="topbar-right">
+                <button class="btn" id="focusToggle" title="Focus Mode (F)"><span>🎯</span><span class="btn-label">Focus</span></button>
+                <button class="btn" id="themeToggle" title="Theme (T)"><span id="themeIcon">🌙</span><span class="btn-label">Theme</span></button>
+            </div>
         </div>
 
-        <div class="content">
-            
-            <div class="title-block">
-                <h2>Issue #3 — Sunday, 8 March 2026</h2>
-                <h1>The PDF Parser: Turning Paper into Data</h1>
-            </div>
-
-            <div class="quote">
-                "Data is the new oil, but raw PDFs are like unrefined crude. Our parser is the refinery that turns chaotic text into operational intelligence."
-            </div>
-
-            <!-- CHUNK 1 -->
-            <div class="card">
-                <h3>🚀 The Three-Stage Pipeline</h3>
-                <p>The journey from a PDF file to a live dashboard session involves three critical stages implemented in the <code>PDFService</code>.</p>
-                <ol>
-                    <li><strong>File Upload:</strong> The raw PDF is received and buffered for processing.</li>
-                    <li><strong>Raw Text Extraction:</strong> Using <code>pdfjs-dist</code>, the system extracts text while preserving <strong>positional information</strong> (coordinates).</li>
-                    <li><strong>Structural Synthesis:</strong> The raw strings are mapped into a <code>GuestData</code> model, identifying room numbers, names, and statuses.</li>
-                </ol>
-                <p>💡 <strong>Note:</strong> Unlike simple text scrapers, our parser understands the <em>visual layout</em> of the page.</p>
-            </div>
-
-            <!-- CHUNK 2 -->
-            <div class="card">
-                <h3>📍 Coordinate-Based Parsing</h3>
-                <p>In <code>pdfService.ts</code>, we don't just search for text; we look at <em>where</em> it is on the page.</p>
-                <ul>
-                    <li><strong>Column Mapping:</strong> Precise X/Y coordinates define where the "Room" column ends and the "Guest Name" column begins.</li>
-                    <li><strong>Horizontal Alignment:</strong> Text on the same Y-axis is grouped into a single guest record.</li>
-                    <li><strong>Resilience:</strong> This method handles PDFs with varying margins much better than simple line-by-line parsing.</li>
-                </ul>
-            </div>
-
-            <!-- CHUNK 3 -->
-            <div class="card">
-                <h3>🔍 Regex: The Pattern Matchers</h3>
-                <p>Even with coordinates, we need Regular Expressions to validate and extract specific data types.</p>
-                <table>
-                    <tr><th>Purpose</th><th>Pattern</th></tr>
-                    <tr><td><strong>Dates</strong></td><td><code>/(\d{2}\/\d{2}\/\d{4})/g</code></td></tr>
-                    <tr><td><strong>Guest Entries</strong></td><td>Matches standard arrival formats to trigger object creation.</td></tr>
-                </table>
-                <p>Regex ensures that a room number like <mark>101</mark> isn't confused with a date or a partial guest name.</p>
-            </div>
-
-            <!-- CHUNK 4 -->
-            <div class="card">
-                <h3>☕ Morning Briefing vs. Arrivals</h3>
-                <p>The app actually contains two distinct parsers to handle different document types:</p>
-                <ul>
-                    <li><strong>Arrivals Parser:</strong> Focuses on individual guest records, car regs, and room assignments.</li>
-                    <li><strong>Morning Briefing Parser:</strong> Focuses on high-level forecasting, restaurant diary entries, and overall hotel stats.</li>
-                </ul>
-                <p>Each uses a unique set of regex rules and coordinate maps tailored to the document's specific design.</p>
-            </div>
-
-            <!-- CHUNK 5 -->
-            <div class="card">
-                <h3>🏗️ Session Management & Sync</h3>
-                <p>Once parsed, the data is pushed to <strong>Firebase Realtime Database</strong> to create a collaborative session.</p>
-                <p><strong>The Sync Logic:</strong></p>
-                <ol>
-                    <li><strong>Unique ID:</strong> Sessions are keyed by the arrival date.</li>
-                    <li><strong>Presence:</strong> <code>/presence/{sessionId}</code> tracks who is currently viewing the data.</li>
-                    <li><strong>Locking:</strong> Admins can "Lock" a session, which updates a flag in RTDB to prevent further edits after the morning handover.</li>
-                </ol>
-            </div>
-
-            <!-- CHUNK 6 -->
-            <div class="card">
-                <h3>⚠️ Common Failure Modes</h3>
-                <p>Parsing isn't magic. When data goes missing, it's usually due to one of these "The Big Three" issues:</p>
-                <ul>
-                    <li><strong>Format Inconsistency:</strong> The PMS exports a PDF with slightly shifted columns, causing coordinate misses.</li>
-                    <li><strong>Regex Failure:</strong> A guest has a name or note that doesn't match the expected pattern.</li>
-                    <li><strong>Sync Lag:</strong> Large PDFs (100+ guests) hitting the database simultaneously can cause temporary UI stutters.</li>
-                </ul>
-            </div>
-
-
-            <!-- INTERACTIVE QUIZ -->
-            <div class="quiz-section" id="quiz-anchor">
-                <div class="title-block" style="margin-bottom: 30px;">
-                    <h2>Knowledge Check</h2>
-                    <h1 style="font-size: 1.8rem;">Data Pipeline Mastery</h1>
-                </div>
-
-                <div class="quiz-container" id="quizContainer">
-                    <!-- Q1 -->
-                    <div class="quiz-question" data-answer="2">
-                        <p>1. Which library is used for the raw text extraction from PDF files?</p>
-                        <div class="options">
-                            <button class="option-btn" data-index="0">A) PDF-Lib</button>
-                            <button class="option-btn" data-index="1">B) Axios</button>
-                            <button class="option-btn" data-index="2">C) pdfjs-dist</button>
-                            <button class="option-btn" data-index="3">D) Puppeteer</button>
-                        </div>
-                    </div>
-
-                    <!-- Q2 -->
-                    <div class="quiz-question" data-answer="1">
-                        <p>2. What core technique does pdfService.ts use to distinguish between different columns?</p>
-                        <div class="options">
-                            <button class="option-btn" data-index="0">A) Counting spaces between words</button>
-                            <button class="option-btn" data-index="1">B) Coordinate-based parsing (X/Y positioning)</button>
-                            <button class="option-btn" data-index="2">C) Splitting by commas</button>
-                            <button class="option-btn" data-index="3">D) Machine Learning image recognition</button>
-                        </div>
-                    </div>
-
-                    <!-- Q3 -->
-                    <div class="quiz-question" data-answer="3">
-                        <p>3. What regex pattern is used to extract dates (DD/MM/YYYY) from the text?</p>
-                        <div class="options">
-                            <button class="option-btn" data-index="0">A) /[A-Z]+/g</button>
-                            <button class="option-btn" data-index="1">B) /\d{3}/g</button>
-                            <button class="option-btn" data-index="2">C) /date:/i</button>
-                            <button class="option-btn" data-index="3">D) /(\d{2}\/\d{2}\/\d{4})/g</button>
-                        </div>
-                    </div>
-
-                    <!-- Q4 -->
-                    <div class="quiz-question" data-answer="0">
-                        <p>4. How does the Morning Briefing parser differ from the standard Arrivals parser?</p>
-                        <div class="options">
-                            <button class="option-btn" data-index="0">A) It focuses on forecasting and restaurant diary entries</button>
-                            <button class="option-btn" data-index="1">B) It doesn't use regex</button>
-                            <button class="option-btn" data-index="2">C) It only handles Excel files</button>
-                            <button class="option-btn" data-index="3">D) It is only available to Admin roles</button>
-                        </div>
-                    </div>
-
-                    <!-- Q5 -->
-                    <div class="quiz-question" data-answer="2">
-                        <p>5. What is a "common failure mode" for the PDF parser?</p>
-                        <div class="options">
-                            <button class="option-btn" data-index="0">A) Firebase being offline</button>
-                            <button class="option-btn" data-index="1">B) Running out of disk space</button>
-                            <button class="option-btn" data-index="2">C) Format inconsistencies in the source PDF</button>
-                            <button class="option-btn" data-index="3">D) Browser theme selection</button>
-                        </div>
+        <!-- ═══════════════ LESSON 1 ═══════════════ -->
+        <div class="lesson-view" id="lesson-1">
+            <div class="content">
+                <div class="title-block">
+                    <div class="issue-badge">📰 Issue #1 · Foundations</div>
+                    <h1>The Big Picture:<br>Architecture & Overview</h1>
+                    <div class="title-meta">
+                        <span>📚 Lesson 1 of 5</span>
+                        <span>🏨 Gilpin Hotel</span>
+                        <span>✅ Completed</span>
                     </div>
                 </div>
 
-                <div class="quiz-score" id="quizScore">
-                    <h2>🎉 Data Pipeline Expert!</h2>
-                    <p>Lesson 3 complete. You've mastered the flow of information.</p>
+                <div class="quote">
+                    "Before you write a single line, understand the system. Every great tool starts with a clear picture of the whole."
+                    <cite>— Gilpin Arrivals Tool, Architecture Notes</cite>
                 </div>
 
-            </div>
+                <div class="card">
+                    <h3>🗺️ What Is the Gilpin Arrivals Tool?</h3>
+                    <p>A <strong>real-time operational dashboard</strong> for Gilpin Hotel staff. It replaces manual paper-based check-in processes by parsing the hotel's PDF arrival sheets and presenting them as a live, collaborative, interactive interface.</p>
+                    <ul>
+                        <li><strong>Receptionists</strong> see who's arriving, their room, dietary needs, and car registration.</li>
+                        <li><strong>Night staff</strong> use it for the morning handover — a snapshot of the previous night.</li>
+                        <li><strong>Managers</strong> can lock a session once it's finalised to prevent edits.</li>
+                    </ul>
+                </div>
 
+                <div class="card">
+                    <h3>🛠️ The Tech Stack</h3>
+                    <p>Every technology was chosen deliberately — here's why each one earns its place:</p>
+                    <div class="stack-grid">
+                        <div class="stack-item"><span class="stack-icon">⚛️</span><span class="stack-name">React</span><span class="stack-role">UI Layer</span></div>
+                        <div class="stack-item"><span class="stack-icon">🔷</span><span class="stack-name">TypeScript</span><span class="stack-role">Type Safety</span></div>
+                        <div class="stack-item"><span class="stack-icon">⚡</span><span class="stack-name">Vite</span><span class="stack-role">Build Tool</span></div>
+                        <div class="stack-item"><span class="stack-icon">🔥</span><span class="stack-name">Firebase</span><span class="stack-role">Backend</span></div>
+                        <div class="stack-item"><span class="stack-icon">📄</span><span class="stack-name">pdfjs-dist</span><span class="stack-role">PDF Parsing</span></div>
+                        <div class="stack-item"><span class="stack-icon">🚀</span><span class="stack-name">Vercel</span><span class="stack-role">Hosting</span></div>
+                    </div>
+                    <p><strong>Why Firebase?</strong> The real-time database allows multiple staff members to see updates instantly — no page refresh, no polling. When one receptionist checks a guest in, everyone else sees it within milliseconds.</p>
+                </div>
+
+                <div class="card">
+                    <h3>🔄 The Data Flow</h3>
+                    <p>From a PDF on someone's desktop to a live dashboard on every screen in the hotel:</p>
+                    <div class="flow">
+                        <div class="flow-step">📄 PMS Export</div><div class="flow-arrow">→</div>
+                        <div class="flow-step">📤 File Upload</div><div class="flow-arrow">→</div>
+                        <div class="flow-step">⚙️ PDF Parser</div><div class="flow-arrow">→</div>
+                        <div class="flow-step">🔥 Firebase RTDB</div><div class="flow-arrow">→</div>
+                        <div class="flow-step">📺 Live Dashboard</div>
+                    </div>
+                    <p>The whole pipeline completes in <mark>under 3 seconds</mark> for a standard 40-room arrival sheet.</p>
+                </div>
+
+                <div class="card">
+                    <h3>🏗️ Core Modules</h3>
+                    <div class="table-wrap">
+                        <table>
+                            <tr><th>Module</th><th>Responsibility</th></tr>
+                            <tr><td><code>PDFService</code></td><td>Parse uploaded PDF files into structured guest data</td></tr>
+                            <tr><td><code>FirebaseService</code></td><td>Read/write sessions to Realtime Database</td></tr>
+                            <tr><td><code>AuthService</code></td><td>Firebase Auth — login, roles, session guards</td></tr>
+                            <tr><td><code>SessionManager</code></td><td>Coordinate presence, locking, and handover state</td></tr>
+                            <tr><td><code>GuestCard</code></td><td>React component rendering a single guest record</td></tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🏨 Lake House vs Main Hotel</h3>
+                    <p>Gilpin is actually <strong>two properties</strong> — the Main Hotel and the Lake House. The tool handles them separately:</p>
+                    <ul>
+                        <li>Each property has its own room numbering convention and PDF layout.</li>
+                        <li>The parser detects which property a PDF belongs to automatically.</li>
+                        <li>Dashboards can be filtered by property so staff don't see irrelevant data.</li>
+                    </ul>
+                </div>
+
+                <div class="quiz-section">
+                    <div class="quiz-header">
+                        <div class="issue-badge">✏️ Knowledge Check</div>
+                        <h2>Architecture Mastery</h2>
+                    </div>
+                    <div id="quiz-container-1">
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">1. What is the primary purpose of the Gilpin Arrivals Tool?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Online hotel booking platform</button>
+                                <button class="option-btn" data-index="1">B) Staff payroll management</button>
+                                <button class="option-btn" data-index="2">C) Real-time dashboard replacing manual paper check-in</button>
+                                <button class="option-btn" data-index="3">D) Guest feedback collection</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">2. Why was Firebase Realtime Database chosen as the backend?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) It's the cheapest option available</button>
+                                <button class="option-btn" data-index="1">B) It pushes updates instantly to all connected clients</button>
+                                <button class="option-btn" data-index="2">C) It supports SQL queries</button>
+                                <button class="option-btn" data-index="3">D) It has the best mobile SDK</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="0">
+                            <p class="q-text">3. How many properties does Gilpin operate, and how does the tool handle them?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Two — detected automatically with separate dashboards</button>
+                                <button class="option-btn" data-index="1">B) One — it's a single hotel</button>
+                                <button class="option-btn" data-index="2">C) Three — requires manual selection on upload</button>
+                                <button class="option-btn" data-index="3">D) Two — staff must tag each PDF manually</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="3">
+                            <p class="q-text">4. Which module is responsible for coordinating presence and the locking mechanism?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) PDFService</button>
+                                <button class="option-btn" data-index="1">B) GuestCard</button>
+                                <button class="option-btn" data-index="2">C) AuthService</button>
+                                <button class="option-btn" data-index="3">D) SessionManager</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quiz-score" id="score-1">
+                        <div class="score-num" id="score-num-1">—</div>
+                        <h2 id="score-title-1">—</h2>
+                        <p id="score-text-1">—</p>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/prism.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/components/prism-typescript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/components/prism-jsx.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/components/prism-json.min.js"></script>
-    
+        <!-- ═══════════════ LESSON 2 ═══════════════ -->
+        <div class="lesson-view" id="lesson-2">
+            <div class="content">
+                <div class="title-block">
+                    <div class="issue-badge">📰 Issue #2 · Security</div>
+                    <h1>Auth & Security:<br>Guarding the Kingdom</h1>
+                    <div class="title-meta">
+                        <span>📚 Lesson 2 of 5</span>
+                        <span>🏨 Gilpin Hotel</span>
+                        <span>✅ Completed</span>
+                    </div>
+                </div>
+
+                <div class="quote">
+                    "Security isn't an add-on. It's the foundation. Every route, every write, every read — trust nothing until it's verified."
+                    <cite>— Gilpin Arrivals Tool, Security Architecture</cite>
+                </div>
+
+                <div class="card">
+                    <h3>🔑 Firebase Authentication</h3>
+                    <p>The tool uses <strong>Firebase Authentication</strong> as its identity layer. Staff log in with email and password — no social logins, no magic links. Clean, simple, auditable.</p>
+                    <ul>
+                        <li><strong>Session persistence:</strong> Firebase keeps users logged in across browser sessions using secure tokens stored in IndexedDB.</li>
+                        <li><strong>Automatic token refresh:</strong> Firebase handles token expiry silently — staff never get logged out mid-shift.</li>
+                        <li><strong>Auth state listener:</strong> <code>onAuthStateChanged</code> reactively updates the entire UI when login state changes.</li>
+                    </ul>
+                </div>
+
+                                <div class="card">
+                    <h3>?? Role-Based Access Control (RBAC)</h3>
+                    <p>Not all staff are equal. The tool enforces roles using <strong>Firebase Custom Claims</strong> � metadata attached to the user's JWT token at the server level.</p>
+                    <div class="table-wrap">
+                        <table>
+                            <tr><th>Role</th><th>Can View</th><th>Can Edit</th><th>Can Lock</th></tr>
+                            <tr><td><mark>Admin</mark></td><td>?</td><td>?</td><td>?</td></tr>
+                            <tr><td>Staff</td><td>?</td><td>?</td><td>?</td></tr>
+                            <tr><td>Viewer</td><td>? (Revoked)</td><td>?</td><td>?</td></tr>
+                        </table>
+                    </div>
+                    <p><em>Note: Viewer access was recently revoked at the database level. Only explicitly designated Staff and Admins can view session data now.</em></p>
+                    <p>Custom claims are set via the <strong>Firebase Admin SDK</strong> and are verified on both the client and in Firebase Security Rules � so they cannot be spoofed.</p>
+                </div>
+                    <p>Custom claims are set via the <strong>Firebase Admin SDK</strong> and are verified on both the client and in Firebase Security Rules — so they cannot be spoofed.</p>
+                </div>
+
+                                <div class="card">
+                    <h3>??? Firebase Security Rules (Recently Hardened)</h3>
+                    <p>The Realtime Database is locked down by rules that run <em>server-side</em>. Recent security audits introduced several strict enforcements:</p>
+                    <ul>
+                        <li><strong>Strict RBAC & Auth:</strong> All read and write operations explicitly require <code>auth != null</code> AND <code>auth.token.email != null</code> (blocking anonymous auth completely), AND the role must be exactly <code>staff</code> or <code>admin</code>.</li>
+                        <li><strong>Payload Validation:</strong> Every single field (like guest notes, room names, etc.) is strictly validated for type and length (e.g., <code>newData.isString() && newData.val().length <= 5000</code>) to prevent payload injection or database bloat.</li>
+                        <li><strong>Asymmetric Access:</strong> Nodes like <code>heartbeat</code> are write-only (reads are blocked to prevent scraping), while <code>analytics.snapshots</code> are read-only (prevents client-side tampering).</li>
+                        <li><strong>Default Deny:</strong> A catch-all <code>$other</code> rule explicitly blocks any reads or writes to undefined nodes.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>🚪 Route Guards</h3>
+                    <p>On the client side, React routes are wrapped in <strong>auth guard components</strong> that check the user's state before rendering:</p>
+                    <div class="flow">
+                        <div class="flow-step">Route Request</div><div class="flow-arrow">→</div>
+                        <div class="flow-step">Auth Check</div><div class="flow-arrow">→</div>
+                        <div class="flow-step">Role Check</div><div class="flow-arrow">→</div>
+                        <div class="flow-step">✅ Render</div>
+                    </div>
+                    <p>If any check fails, the user is redirected to the login screen. This prevents even a quick flash of protected content.</p>
+                </div>
+
+                <div class="card">
+                    <h3>⚠️ Common Security Pitfalls</h3>
+                    <ul>
+                        <li><strong>Client-only role checks:</strong> Never trust the client alone. Always back it up with Security Rules.</li>
+                        <li><strong>Hardcoded secrets:</strong> API keys live in <code>.env</code> files — never committed to git. The Firebase config is safe to expose (it's public by design), but the Admin SDK key is not.</li>
+                        <li><strong>Stale claims:</strong> Custom claims are cached in the JWT. After updating a role, call <code>user.getIdToken(true)</code> to force a refresh.</li>
+                    </ul>
+                </div>
+
+                <div class="quiz-section">
+                    <div class="quiz-header">
+                        <div class="issue-badge">✏️ Knowledge Check</div>
+                        <h2>Security Mastery</h2>
+                    </div>
+                    <div id="quiz-container-2">
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">1. Where are Firebase Custom Claims stored and verified?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) In localStorage on the client</button>
+                                <button class="option-btn" data-index="1">B) Inside the user's JWT token, verified server-side</button>
+                                <button class="option-btn" data-index="2">C) In a separate MySQL database</button>
+                                <button class="option-btn" data-index="3">D) In the React component state</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">2. Which role can lock a session to prevent further edits?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Viewer</button>
+                                <button class="option-btn" data-index="1">B) Staff</button>
+                                <button class="option-btn" data-index="2">C) Admin</button>
+                                <button class="option-btn" data-index="3">D) Any authenticated user</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="3">
+                            <p class="q-text">3. What must you call after updating a user's custom claim to ensure it takes effect immediately?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) firebase.auth().signOut()</button>
+                                <button class="option-btn" data-index="1">B) window.location.reload()</button>
+                                <button class="option-btn" data-index="2">C) updateProfile(user)</button>
+                                <button class="option-btn" data-index="3">D) user.getIdToken(true)</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="0">
+                            <p class="q-text">4. Firebase Security Rules run on the...</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Server — they cannot be bypassed by the client</button>
+                                <button class="option-btn" data-index="1">B) Client — they are downloaded and run in the browser</button>
+                                <button class="option-btn" data-index="2">C) Edge — they run in Cloudflare Workers</button>
+                                <button class="option-btn" data-index="3">D) Both client and server equally</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quiz-score" id="score-2">
+                        <div class="score-num" id="score-num-2">—</div>
+                        <h2 id="score-title-2">—</h2>
+                        <p id="score-text-2">—</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════ LESSON 3 ═══════════════ -->
+        <div class="lesson-view" id="lesson-3">
+            <div class="content">
+                <div class="title-block">
+                    <div class="issue-badge">📰 Issue #3 · Sunday, 8 March 2026</div>
+                    <h1>The PDF Parser:<br>Turning Paper into Data</h1>
+                    <div class="title-meta">
+                        <span>📚 Lesson 3 of 5</span>
+                        <span>🏨 Gilpin Hotel</span>
+                        <span>✅ Completed</span>
+                    </div>
+                </div>
+
+                <div class="quote">
+                    "Data is the new oil, but raw PDFs are like unrefined crude. Our parser is the refinery that turns chaotic text into operational intelligence."
+                    <cite>— Gilpin Arrivals Tool, Architecture Notes</cite>
+                </div>
+
+                <div class="card">
+                    <h3>🚀 The Three-Stage Pipeline</h3>
+                    <p>The journey from a PDF file to a live dashboard session involves three critical stages in the <code>PDFService</code>.</p>
+                    <ol>
+                        <li><strong>File Upload:</strong> The raw PDF is received and buffered for processing.</li>
+                        <li><strong>Raw Text Extraction:</strong> Using <code>pdfjs-dist</code>, the system extracts text while preserving <strong>positional information</strong> — the X/Y coordinates of every character.</li>
+                        <li><strong>Structural Synthesis:</strong> The raw strings are mapped into a <code>GuestData</code> model, identifying room numbers, names, and statuses.</li>
+                    </ol>
+                    <p>💡 Unlike simple text scrapers, our parser understands the <em>visual layout</em> of the page — not just the words on it.</p>
+                </div>
+
+                <div class="card">
+                    <h3>📍 Coordinate-Based Parsing</h3>
+                    <p>In <code>pdfService.ts</code>, we don't just search for text — we look at <em>where</em> it sits on the page.</p>
+                    <ul>
+                        <li><strong>Column Mapping:</strong> Precise X/Y coordinates define where the "Room" column ends and the "Guest Name" column begins.</li>
+                        <li><strong>Horizontal Alignment:</strong> Text sharing the same Y-axis is grouped into a single guest record.</li>
+                        <li><strong>Resilience:</strong> Handles PDFs with varying margins far better than naive line-by-line parsing.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>🔍 Regex: The Pattern Matchers</h3>
+                    <p>Even with coordinates, Regular Expressions validate and extract specific data types.</p>
+                    <div class="table-wrap">
+                        <table>
+                            <tr><th>Purpose</th><th>Pattern</th></tr>
+                            <tr><td><strong>Dates</strong></td><td><code>/(\d{2}\/\d{2}\/\d{4})/g</code></td></tr>
+                            <tr><td><strong>Guest Entries</strong></td><td>Matches standard arrival formats to trigger object creation.</td></tr>
+                        </table>
+                    </div>
+                    <p>Regex ensures room <mark>101</mark> isn't misread as a date fragment or part of a guest name.</p>
+                </div>
+
+                <div class="card">
+                    <h3>☕ Morning Briefing vs. Arrivals</h3>
+                    <p>The app contains two distinct parsers for two document types:</p>
+                    <ul>
+                        <li><strong>Arrivals Parser:</strong> Individual guest records, car registrations, room assignments.</li>
+                        <li><strong>Morning Briefing Parser:</strong> High-level forecasting, restaurant diary entries, hotel statistics.</li>
+                    </ul>
+                    <p>Each uses a unique set of regex rules and coordinate maps tailored to its document's specific layout.</p>
+                </div>
+
+                <div class="card">
+                    <h3>🏗️ Session Management & Sync</h3>
+                    <p>Once parsed, data is pushed to <strong>Firebase Realtime Database</strong> to create a collaborative session.</p>
+                    <ol>
+                        <li><strong>Unique Key:</strong> Sessions are keyed by the arrival date — one session per day.</li>
+                        <li><strong>Presence:</strong> <code>/presence/{sessionId}</code> tracks who is currently viewing.</li>
+                        <li><strong>Locking:</strong> Admins set a flag in RTDB to prevent further edits after morning handover.</li>
+                    </ol>
+                </div>
+
+                <div class="card">
+                    <h3>⚠️ The Big Three: Common Failure Modes</h3>
+                    <ul>
+                        <li><strong>Format Inconsistency:</strong> PMS exports a PDF with slightly shifted columns, causing coordinate misses. <mark>Most common.</mark></li>
+                        <li><strong>Regex Failure:</strong> Unusual guest name or note doesn't match the expected pattern.</li>
+                        <li><strong>Sync Lag:</strong> Large PDFs (100+ guests) hitting Firebase simultaneously cause temporary UI stutters.</li>
+                    </ul>
+                </div>
+
+                <div class="quiz-section">
+                    <div class="quiz-header">
+                        <div class="issue-badge">✏️ Knowledge Check</div>
+                        <h2>Data Pipeline Mastery</h2>
+                    </div>
+                    <div id="quiz-container-3">
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">1. Which library handles raw text extraction from PDF files?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) PDF-Lib</button>
+                                <button class="option-btn" data-index="1">B) Axios</button>
+                                <button class="option-btn" data-index="2">C) pdfjs-dist</button>
+                                <button class="option-btn" data-index="3">D) Puppeteer</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">2. What core technique does <code>pdfService.ts</code> use to distinguish between columns?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Counting spaces between words</button>
+                                <button class="option-btn" data-index="1">B) Coordinate-based parsing (X/Y positioning)</button>
+                                <button class="option-btn" data-index="2">C) Splitting by commas</button>
+                                <button class="option-btn" data-index="3">D) Machine Learning image recognition</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="3">
+                            <p class="q-text">3. What regex pattern extracts dates in DD/MM/YYYY format?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) /[A-Z]+/g</button>
+                                <button class="option-btn" data-index="1">B) /\d{3}/g</button>
+                                <button class="option-btn" data-index="2">C) /date:/i</button>
+                                <button class="option-btn" data-index="3">D) /(\d{2}\/\d{2}\/\d{4})/g</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="0">
+                            <p class="q-text">4. What is the main focus of the Morning Briefing parser?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Forecasting and restaurant diary entries</button>
+                                <button class="option-btn" data-index="1">B) It doesn't use regex</button>
+                                <button class="option-btn" data-index="2">C) It only handles Excel files</button>
+                                <button class="option-btn" data-index="3">D) It is only available to Admin roles</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">5. What is the most common failure mode for the PDF parser?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Firebase being offline</button>
+                                <button class="option-btn" data-index="1">B) Running out of disk space</button>
+                                <button class="option-btn" data-index="2">C) Format inconsistencies in the source PDF</button>
+                                <button class="option-btn" data-index="3">D) Browser theme selection</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quiz-score" id="score-3">
+                        <div class="score-num" id="score-num-3">—</div>
+                        <h2 id="score-title-3">—</h2>
+                        <p id="score-text-3">—</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════ LESSON 4 ═══════════════ -->
+        <div class="lesson-view" id="lesson-4">
+            <div class="content">
+                <div class="title-block">
+                    <div class="issue-badge">📰 Issue #4 · The Engine</div>
+                    <h1>Firebase RTDB:<br>The Real-Time Engine</h1>
+                    <div class="title-meta">
+                        <span>📚 Lesson 4 of 5</span>
+                        <span>🏨 Gilpin Hotel</span>
+                        <span>🔴 Current</span>
+                    </div>
+                </div>
+
+                <div class="quote">
+                    "In a fast-paced hotel environment, a delay of five seconds is an eternity. RTDB ensures that when a guest arrives at the gate, the front desk knows before they even park."
+                    <cite>— Gilpin Arrivals Tool, Performance Specs</cite>
+                </div>
+
+                <div class="card">
+                    <h3>📡 Sync vs. Fetch: The Paradigm Shift</h3>
+                    <p>Traditional apps use <strong>REST APIs</strong> (Request → Response). The Gilpin tool uses <strong>Data Synchronization</strong>.</p>
+                    <ul>
+                        <li><strong>No Polling:</strong> The client doesn't ask "Is there new data?". The server pushes data the millisecond it changes.</li>
+                        <li><strong>WebSockets:</strong> A persistent connection stays open between the browser and Firebase.</li>
+                        <li><strong>Latency:</strong> Updates typically propagate to all connected staff in <mark>&lt;200ms</mark>.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>🌳 The Data Tree</h3>
+                    <p>Unlike SQL tables, RTDB is one giant JSON tree. We structure it for speed and security:</p>
+                    <div class="table-wrap">
+                        <table>
+                            <tr><th>Path</th><th>Purpose</th></tr>
+                            <tr><td><code>/sessions/{date}</code></td><td>The core guest list and statuses for a specific day.</td></tr>
+                            <tr><td><code>/presence/{sessionId}</code></td><td>Ephemeral data: who is currently looking at this session.</td></tr>
+                            <tr><td><code>/bulletins</code></td><td>Global announcements and system-wide alerts.</td></tr>
+                            <tr><td><code>/handover</code></td><td>Shift-change notes and stayover calculations.</td></tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>👥 Presence Tracking: Who's Online?</h3>
+                    <p>The "Presence" system uses a special Firebase feature called <code>onDisconnect</code>.</p>
+                    <ol>
+                        <li>When a staff member opens the dashboard, they write their UID to <code>/presence/{sessionId}/{uid}</code>.</li>
+                        <li>The client registers an <code>onDisconnect().remove()</code> operation.</li>
+                        <li>If the browser closes, the tab crashes, or the Wi-Fi drops, <strong>Firebase itself</strong> deletes the record after a short timeout.</li>
+                    </ol>
+                    <p>This allows managers to see exactly which departments are currently monitoring the arrivals.</p>
+                </div>
+
+                <div class="card">
+                    <h3>🔐 Server-Side Enforcement</h3>
+                    <p>We don't trust the client to validate data. Our <strong>Security Rules</strong> act as a server-side firewall:</p>
+                    <ul>
+                        <li><strong>Auth Guard:</strong> <code>auth != null</code> ensures only logged-in staff can see anything.</li>
+                        <li><strong>Role Check:</strong> <code>auth.token.role === 'admin'</code> is required for destructive actions like deleting a session.</li>
+                        <li><strong>Schema Validation:</strong> Rules check that <code>newData.child('room').isString()</code> and length is valid, preventing malformed data from entering the tree.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>📶 Offline Resilience</h3>
+                    <p>Hotel Wi-Fi can be spotty. Firebase handles this gracefully:</p>
+                    <ul>
+                        <li><strong>Local Cache:</strong> Changes are written to a local buffer immediately (UI feels instant).</li>
+                        <li><strong>Background Sync:</strong> Once the connection is restored, Firebase merges the local changes back to the server.</li>
+                        <li><strong>Conflict Resolution:</strong> The "Last Write Wins" policy ensures the most recent edit is preserved.</li>
+                    </ul>
+                </div>
+
+                <div class="quiz-section">
+                    <div class="quiz-header">
+                        <div class="issue-badge">✏️ Knowledge Check</div>
+                        <h2>RTDB Mastery</h2>
+                    </div>
+                    <div id="quiz-container-4">
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">1. What is the primary difference between RTDB and a traditional REST API?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) RTDB is slower but more secure</button>
+                                <button class="option-btn" data-index="1">B) RTDB pushes data to clients instantly via WebSockets</button>
+                                <button class="option-btn" data-index="2">C) RTDB only works on mobile devices</button>
+                                <button class="option-btn" data-index="3">D) REST APIs are better for real-time dashboards</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">2. How does the system automatically remove a user from the Presence list when they close their tab?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Using a setInterval timer</button>
+                                <button class="option-btn" data-index="1">B) By sending a 'goodbye' fetch request</button>
+                                <button class="option-btn" data-index="2">C) Using the onDisconnect() hook provided by Firebase</button>
+                                <button class="option-btn" data-index="3">D) By tracking mouse movements</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="0">
+                            <p class="q-text">3. In the RTDB data tree, where is the main guest list stored?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) /sessions</button>
+                                <button class="option-btn" data-index="1">B) /users</button>
+                                <button class="option-btn" data-index="2">C) /logs</button>
+                                <button class="option-btn" data-index="3">D) /config</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">4. What is the benefit of Firebase's local caching?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) It makes the PDF files smaller</button>
+                                <button class="option-btn" data-index="1">B) It encrypts the user's password</button>
+                                <button class="option-btn" data-index="2">C) It allows the app to work offline and sync later</button>
+                                <button class="option-btn" data-index="3">D) It increases the server cost</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">5. Where are the security rules that prevent unauthorized access executed?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) In the user's browser (React code)</button>
+                                <button class="option-btn" data-index="1">B) On the Firebase servers (Server-side)</button>
+                                <button class="option-btn" data-index="2">C) In the PDF parser service</button>
+                                <button class="option-btn" data-index="3">D) In the Vercel edge functions</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quiz-score" id="score-4">
+                        <div class="score-num" id="score-num-4">—</div>
+                        <h2 id="score-title-4">—</h2>
+                        <p id="score-text-4">—</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════ LESSON 5 (locked) ═══════════════ -->
+        <div class="lesson-view" id="lesson-5">
+            <div class="content">
+                <div class="locked-screen">
+                    <div class="lock-icon">🔒</div>
+                    <h2>AI / Gemini Features</h2>
+                    <p>This lesson covers the AI audit system, Gemini integration, and how machine intelligence enhances the hotel workflow.</p>
+                    <div class="countdown">Unlocks in 4 days</div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /main-wrapper -->
+
+    <button class="back-to-top" id="backToTop" title="Back to top">↑</button>
+
     <script>
-        // Scroll Progress Bar
+        // ── STATE ──────────────────────────────────────
+        let currentLesson = parseInt(localStorage.getItem('currentLesson') || '4');
+        const quizState = {}; // track answered per lesson
+
+        // ── NAVIGATION ────────────────────────────────
+        function goToLesson(n) {
+            // Hide all views
+            document.querySelectorAll('.lesson-view').forEach(v => v.classList.remove('active-view'));
+            document.querySelectorAll('.lesson-nav').forEach(v => v.classList.remove('active'));
+
+            // Show target
+            document.getElementById('lesson-' + n).classList.add('active-view');
+            document.getElementById('nav-' + n).classList.add('active');
+            currentLesson = n;
+            localStorage.setItem('currentLesson', n);
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Update reading time
+            updateReadingTime();
+
+            // Close mobile sidebar
+            if (window.innerWidth <= 768) closeSidebar();
+        }
+
+        function showLockedToast(msg) { showToast('🔒 ' + msg); }
+
+        // ── INIT ───────────────────────────────────────
+        goToLesson(currentLesson);
+
+        // ── READING TIME ──────────────────────────────
+        function updateReadingTime() {
+            const view = document.querySelector('.lesson-view.active-view');
+            if (!view) return;
+            const words = view.innerText.trim().split(/\s+/).length;
+            const mins  = Math.max(1, Math.round(words / 220));
+            document.getElementById('readingTime').textContent = mins + ' min read';
+        }
+
+        // ── SCROLL PROGRESS ───────────────────────────
         window.addEventListener('scroll', () => {
-            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            const scrolled = (winScroll / height) * 100;
-            document.getElementById('progressBar').style.width = scrolled + '%';
-        });
+            const s = document.documentElement.scrollTop;
+            const h = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            document.getElementById('progressBar').style.width = (h ? (s/h)*100 : 0) + '%';
+            document.getElementById('backToTop').classList.toggle('visible', s > 400);
+        }, { passive: true });
 
-        // Focus Mode Toggle
-        const focusToggle = document.getElementById('focusToggle');
-        focusToggle.addEventListener('click', () => {
+        document.getElementById('backToTop').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+        // ── HAMBURGER ─────────────────────────────────
+        function closeSidebar() { document.body.classList.remove('sidebar-open'); }
+        document.getElementById('hamburger').addEventListener('click', () => document.body.classList.toggle('sidebar-open'));
+        document.getElementById('overlay').addEventListener('click', closeSidebar);
+
+        // ── FOCUS MODE ────────────────────────────────
+        const focusBtn = document.getElementById('focusToggle');
+        if (localStorage.getItem('focusMode') === '1') { document.body.classList.add('focus-mode'); focusBtn.classList.add('active-btn'); }
+        focusBtn.addEventListener('click', () => {
             document.body.classList.toggle('focus-mode');
-            if (document.body.classList.contains('focus-mode')) {
-                focusToggle.innerHTML = '<span class="icon">📖</span> Show Menu';
-            } else {
-                focusToggle.innerHTML = '<span class="icon">🎯</span> Focus Mode';
-            }
+            const on = document.body.classList.contains('focus-mode');
+            focusBtn.classList.toggle('active-btn', on);
+            localStorage.setItem('focusMode', on ? '1' : '0');
+            showToast(on ? '🎯 Focus mode on' : '📖 Focus mode off');
         });
 
-        // Theme Toggle
-        const themeToggle = document.getElementById('themeToggle');
-        themeToggle.addEventListener('click', () => {
+        // ── THEME ─────────────────────────────────────
+        const themeBtn  = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-mode'); themeIcon.textContent = '☀️'; }
+        themeBtn.addEventListener('click', () => {
             document.body.classList.toggle('light-mode');
+            const light = document.body.classList.contains('light-mode');
+            themeIcon.textContent = light ? '☀️' : '🌙';
+            localStorage.setItem('theme', light ? 'light' : 'dark');
         });
 
-        // Interactive Quiz Logic
-        let score = 0;
-        let answeredQuestions = 0;
-        const totalQuestions = document.querySelectorAll('.quiz-question').length;
+        // ── KEYBOARD ──────────────────────────────────
+        document.addEventListener('keydown', e => {
+            if (['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
+            if (e.key === 'f' || e.key === 'F') focusBtn.click();
+            if (e.key === 't' || e.key === 'T') themeBtn.click();
+            if (e.key === 'Escape') closeSidebar();
+            if (e.key === 'ArrowRight') { const next = Math.min(currentLesson + 1, 4); goToLesson(next); }
+            if (e.key === 'ArrowLeft')  { const prev = Math.max(currentLesson - 1, 1); goToLesson(prev); }
+        });
 
-        document.querySelectorAll('.quiz-question').forEach(question => {
-            const correctAnswer = parseInt(question.getAttribute('data-answer'));
-            const options = question.querySelectorAll('.option-btn');
+        // ── TOAST ─────────────────────────────────────
+        let toastTimer;
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+        }
 
-            options.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    // Prevent double answering
-                    if (this.parentElement.querySelector('.disabled')) return;
+        // ── QUIZ ENGINE ───────────────────────────────
+        function initQuiz(lessonNum) {
+            const container = document.getElementById('quiz-container-' + lessonNum);
+            if (!container || quizState[lessonNum]) return;
+            quizState[lessonNum] = { score: 0, answered: 0 };
 
-                    const selectedAnswer = parseInt(this.getAttribute('data-index'));
-                    
-                    // Disable all options in this question
-                    options.forEach(o => o.classList.add('disabled'));
+            const questions = container.querySelectorAll('.quiz-question');
+            const total = questions.length;
 
-                    if (selectedAnswer === correctAnswer) {
-                        this.classList.add('correct');
-                        this.innerHTML += ' <span>✅</span>';
-                        score++;
-                    } else {
-                        this.classList.add('wrong');
-                        this.innerHTML += ' <span>❌</span>';
-                        // Highlight correct one
-                        options[correctAnswer].classList.add('correct');
-                        options[correctAnswer].classList.remove('disabled'); // keep it slightly vibrant
-                    }
-
-                    answeredQuestions++;
-
-                    // Check if quiz is complete
-                    if (answeredQuestions === totalQuestions) {
-                        setTimeout(() => {
-                            const scoreDiv = document.getElementById('quizScore');
-                            scoreDiv.style.display = 'block';
-                            
-                            if (score === totalQuestions) {
-                                scoreDiv.innerHTML = `<h2>🎉 Data Pipeline Expert! (${score}/${totalQuestions})</h2><p>Lesson 3 complete. You've mastered the flow of information.</p>`;
-                                fireConfetti();
-                            } else {
-                                scoreDiv.innerHTML = `<h2>Keep Studying! (${score}/${totalQuestions})</h2><p>Review the pipeline details above. You've still completed Lesson 3.</p>`;
-                            }
-                            
-                            scoreDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }, 500);
-                    }
+            questions.forEach(question => {
+                const correct = parseInt(question.getAttribute('data-answer'));
+                const options = question.querySelectorAll('.option-btn');
+                options.forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        if (question.dataset.answered) return;
+                        question.dataset.answered = '1';
+                        const chosen = parseInt(this.getAttribute('data-index'));
+                        options.forEach(o => o.classList.add('disabled'));
+                        if (chosen === correct) {
+                            this.classList.add('correct');
+                            this.innerHTML += ' <span>✅</span>';
+                            quizState[lessonNum].score++;
+                        } else {
+                            this.classList.add('wrong');
+                            this.innerHTML += ' <span>❌</span>';
+                            options[correct].classList.add('correct');
+                            options[correct].innerHTML += ' <span>✅</span>';
+                        }
+                        quizState[lessonNum].answered++;
+                        if (quizState[lessonNum].answered === total) {
+                            setTimeout(() => finishQuiz(lessonNum, total), 500);
+                        }
+                    });
                 });
             });
-        });
+        }
 
+        function finishQuiz(lessonNum, total) {
+            const s    = quizState[lessonNum].score;
+            const pct  = s / total;
+            const box  = document.getElementById('score-' + lessonNum);
+            let title, text;
+            if (pct === 1)       { title = '🎉 Perfect Score!';       text = 'Lesson ' + lessonNum + ' complete. Outstanding.'; fireConfetti(); }
+            else if (pct >= 0.6) { title = '👍 Solid Understanding';  text = 'Almost there — review the missed topics above.'; }
+            else                 { title = '📖 Keep Studying';         text = 'Re-read the cards above before moving on.'; }
+            document.getElementById('score-num-' + lessonNum).textContent  = s + '/' + total;
+            document.getElementById('score-title-' + lessonNum).textContent = title;
+            document.getElementById('score-text-' + lessonNum).textContent  = text;
+            box.style.display = 'block';
+            box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Init quizzes for unlocked lessons
+        [1, 2, 3, 4].forEach(n => initQuiz(n));
+
+        // ── CONFETTI ──────────────────────────────────
         function fireConfetti() {
-            var duration = 3 * 1000;
-            var animationEnd = Date.now() + duration;
-            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
-
-            function randomInRange(min, max) {
-                return Math.random() * (max - min) + min;
-            }
-
-            var interval = setInterval(function() {
-                var timeLeft = animationEnd - Date.now();
-
-                if (timeLeft <= 0) {
-                    return clearInterval(interval);
-                }
-
-                var particleCount = 50 * (timeLeft / duration);
-                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
-                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+            const end = Date.now() + 3000;
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+            const rand = (a, b) => Math.random() * (b - a) + a;
+            const iv = setInterval(() => {
+                const left = end - Date.now();
+                if (left <= 0) return clearInterval(iv);
+                const n = 50 * (left / 3000);
+                confetti({ ...defaults, particleCount: n, origin: { x: rand(0.1, 0.3), y: Math.random() - 0.2 }, colors: ['#c5a065','#e8c98a','#ffffff'] });
+                confetti({ ...defaults, particleCount: n, origin: { x: rand(0.7, 0.9), y: Math.random() - 0.2 }, colors: ['#c5a065','#e8c98a','#ffffff'] });
             }, 250);
         }
     </script>
 </body>
 </html>
+
+

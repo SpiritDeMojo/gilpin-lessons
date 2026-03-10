@@ -45,7 +45,7 @@
             transition: background 0.3s, color 0.3s;
         }
 
-        /* ── PROGRESS ─────────────────────── */
+        /* 📋 PROGRESS */
         .progress-container {
             position: fixed; top: 0;
             left: var(--sidebar-width);
@@ -61,7 +61,7 @@
             transition: width 0.1s linear;
         }
 
-        /* ── OVERLAY ──────────────────────── */
+        /* 🌑 OVERLAY */
         .overlay {
             display: none; position: fixed; inset: 0;
             background: rgba(0,0,0,0.6); backdrop-filter: blur(2px);
@@ -69,7 +69,7 @@
         }
         body.sidebar-open .overlay { display: block; opacity: 1; }
 
-        /* ── SIDEBAR ──────────────────────── */
+        /* 📑 SIDEBAR */
         .sidebar {
             position: fixed; top: 0; left: 0;
             width: var(--sidebar-width); height: 100vh;
@@ -111,7 +111,7 @@
         .nav-check { color: var(--gold); font-size: 0.9rem; }
         .sidebar-divider { height: 1px; background: var(--border-color); margin: 4px 0; }
 
-        /* ── TOPBAR ───────────────────────── */
+        /* 🏷️ TOPBAR */
         .topbar {
             position: sticky; top: 3px; z-index: 90;
             padding: 12px 40px;
@@ -138,7 +138,7 @@
         .btn:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
         .btn.active-btn { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
 
-        /* ── MAIN ─────────────────────────── */
+        /* 🏰 MAIN */
         .main-wrapper {
             margin-left: var(--sidebar-width); min-height: 100vh;
             transition: margin-left var(--transition);
@@ -146,7 +146,7 @@
         body.focus-mode .main-wrapper { margin-left: 0; }
         body.focus-mode .progress-container { left: 0; width: 100%; }
 
-        /* ── LESSON VIEWS ─────────────────── */
+        /* 📖 LESSON VIEWS */
         .lesson-view { display: none; }
         .lesson-view.active-view { display: block; }
 
@@ -160,7 +160,7 @@
             to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* ── TITLE BLOCK ──────────────────── */
+        /* 🏷️ TITLE BLOCK */
         .title-block { text-align: center; margin-bottom: 52px; padding-top: 10px; }
         .issue-badge {
             display: inline-flex; align-items: center; gap: 7px;
@@ -178,7 +178,7 @@
         }
         .title-meta span { display: flex; align-items: center; gap: 5px; }
 
-        /* ── QUOTE ────────────────────────── */
+        /* 💬 QUOTE */
         .quote {
             border-left: 3px solid var(--gold); background: var(--gold-dim);
             padding: 20px 28px; border-radius: 0 14px 14px 0;
@@ -186,7 +186,7 @@
         }
         .quote cite { display: block; font-style: normal; font-size: 0.8rem; color: var(--text-muted); margin-top: 10px; font-weight: 600; }
 
-        /* ── CARDS ────────────────────────── */
+        /* 🃏 CARDS */
         .card {
             background: var(--bg-card); border: 1px solid var(--border-color);
             border-radius: 18px; padding: 28px 30px; margin-bottom: 24px;
@@ -214,14 +214,14 @@
         }
         body.light-mode code { background: rgba(0,0,0,0.05); color: #9a6b1e; }
 
-        /* ── TABLES ───────────────────────── */
+        /* 📊 TABLES */
         .table-wrap { overflow-x: auto; margin-bottom: 1.3rem; border-radius: 10px; border: 1px solid var(--border-color); }
         table { width: 100%; border-collapse: collapse; background: var(--bg-dark); }
         th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 0.93rem; }
         tr:last-child td { border-bottom: none; }
         th { background: var(--gold-dim); color: var(--gold); font-weight: 700; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        /* ── STACK BADGE ──────────────────── */
+        /* 🏷️ STACK BADGE */
         .stack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-bottom: 1.3rem; }
         .stack-item {
             background: var(--bg-dark); border: 1px solid var(--border-color);
@@ -233,7 +233,7 @@
         .stack-item .stack-name { font-size: 0.82rem; font-weight: 700; color: var(--text-main); display: block; }
         .stack-item .stack-role { font-size: 0.72rem; color: var(--text-muted); display: block; }
 
-        /* ── FLOW DIAGRAM ─────────────────── */
+        /* 🗺️ FLOW DIAGRAM */
         .flow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 1.3rem; }
         .flow-step {
             background: var(--gold-dim); border: 1px solid var(--gold);
@@ -242,7 +242,7 @@
         }
         .flow-arrow { color: var(--text-muted); font-size: 1rem; }
 
-        /* ── QUIZ ─────────────────────────── */
+        /* 🧠 QUIZ */
         .quiz-section { margin-top: 60px; border-top: 1px solid var(--border-color); padding-top: 44px; }
         .quiz-header { text-align: center; margin-bottom: 28px; }
         .quiz-header h2 { font-size: 1.5rem; font-weight: 800; }
@@ -272,7 +272,7 @@
         .quiz-score p { color: var(--text-muted); margin: 0; font-size: 0.93rem; }
         @keyframes bounceIn { 0% { transform: scale(0.75); opacity: 0; } 70% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
 
-        /* ── LOCKED SCREEN ────────────────── */
+        /* 🔒 LOCKED SCREEN */
         .locked-screen {
             text-align: center; padding: 80px 40px;
             display: flex; flex-direction: column; align-items: center; gap: 16px;
@@ -286,7 +286,7 @@
             font-weight: 700; font-size: 0.9rem;
         }
 
-        /* ── BACK TO TOP ──────────────────── */
+        /* 🔝 BACK TO TOP */
         .back-to-top {
             position: fixed; bottom: 32px; right: 32px;
             width: 44px; height: 44px; border-radius: 12px;
@@ -299,7 +299,7 @@
         .back-to-top.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
         .back-to-top:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); transform: translateY(-2px); }
 
-        /* ── TOAST ────────────────────────── */
+        /* 📢 TOAST */
         .toast {
             position: fixed; bottom: 32px; left: 50%;
             transform: translateX(-50%) translateY(20px);
@@ -312,7 +312,7 @@
         }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-        /* ── RESPONSIVE ───────────────────── */
+        /* 📱 RESPONSIVE */
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); }
             body.sidebar-open .sidebar { transform: translateX(0); }
@@ -351,28 +351,29 @@
         </div>
 
         <div class="lesson-nav" id="nav-1" onclick="goToLesson(1)">
-            <span>📐</span>
+            <span>📋</span>
             <div class="nav-label">1. The Big Picture<span class="locked-date">Architecture & Overview</span></div>
-            <span class="nav-check">✓</span>
+            <span class="nav-check">✔️</span>
         </div>
         <div class="lesson-nav" id="nav-2" onclick="goToLesson(2)">
-            <span>🔐</span>
+            <span>🔒</span>
             <div class="nav-label">2. Auth & Security<span class="locked-date">Guarding the Kingdom</span></div>
-            <span class="nav-check">✓</span>
+            <span class="nav-check">✔️</span>
         </div>
         <div class="lesson-nav" id="nav-3" onclick="goToLesson(3)">
             <span>📄</span>
             <div class="nav-label">3. The PDF Parser<span class="locked-date">Turning Paper into Data</span></div>
-            <span class="nav-check">✓</span>
+            <span class="nav-check">✔️</span>
         </div>
         <div class="sidebar-divider"></div>
-        <div class="lesson-nav active" id="nav-4" onclick="goToLesson(4)">
+        <div class="lesson-nav" id="nav-4" onclick="goToLesson(4)">
             <span>🔥</span>
             <div class="nav-label">4. Firebase RTDB<span class="locked-date">The Real-Time Engine</span></div>
+            <span class="nav-check">✔️</span>
         </div>
-        <div class="lesson-nav locked" id="nav-5" onclick="showLockedToast('Unlocks in 4 days')">
-            <span>🔒</span>
-            <div class="nav-label">5. AI / Gemini Features<span class="locked-date">Unlocks in 4 days</span></div>
+        <div class="lesson-nav active" id="nav-5" onclick="goToLesson(5)">
+            <span>✨</span>
+            <div class="nav-label">5. AI / Gemini Features<span class="locked-date">The Intelligence Layer</span></div>
         </div>
     </aside>
 
@@ -381,24 +382,24 @@
         <div class="topbar">
             <div class="topbar-left">
                 <button class="hamburger" id="hamburger">☰</button>
-                <div class="reading-time">📖 <span id="readingTime">—</span></div>
+                <div class="reading-time">🕒 <span id="readingTime">?</span></div>
             </div>
             <div class="topbar-right">
-                <button class="btn" id="focusToggle" title="Focus Mode (F)"><span>🎯</span><span class="btn-label">Focus</span></button>
-                <button class="btn" id="themeToggle" title="Theme (T)"><span id="themeIcon">🌙</span><span class="btn-label">Theme</span></button>
+                <button class="btn" id="focusToggle" title="Focus Mode (F)"><span>🔲</span><span class="btn-label">Focus</span></button>
+                <button class="btn" id="themeToggle" title="Theme (T)"><span id="themeIcon">🌓</span><span class="btn-label">Theme</span></button>
             </div>
         </div>
 
-        <!-- ═══════════════ LESSON 1 ═══════════════ -->
+        <!-- 📘 LESSON 1 -->
         <div class="lesson-view" id="lesson-1">
             <div class="content">
                 <div class="title-block">
-                    <div class="issue-badge">📰 Issue #1 · Foundations</div>
+                    <div class="issue-badge">📖 Issue #1 — Foundations</div>
                     <h1>The Big Picture:<br>Architecture & Overview</h1>
                     <div class="title-meta">
-                        <span>📚 Lesson 1 of 5</span>
+                        <span>🕒 Lesson 1 of 5</span>
                         <span>🏨 Gilpin Hotel</span>
-                        <span>✅ Completed</span>
+                        <span>✔️ Completed</span>
                     </div>
                 </div>
 
@@ -408,7 +409,7 @@
                 </div>
 
                 <div class="card">
-                    <h3>🗺️ What Is the Gilpin Arrivals Tool?</h3>
+                    <h3>🛠️ What Is the Gilpin Arrivals Tool?</h3>
                     <p>A <strong>real-time operational dashboard</strong> for Gilpin Hotel staff. It replaces manual paper-based check-in processes by parsing the hotel's PDF arrival sheets and presenting them as a live, collaborative, interactive interface.</p>
                     <ul>
                         <li><strong>Receptionists</strong> see who's arriving, their room, dietary needs, and car registration.</li>
@@ -418,34 +419,34 @@
                 </div>
 
                 <div class="card">
-                    <h3>🛠️ The Tech Stack</h3>
+                    <h3>🚀 The Tech Stack</h3>
                     <p>Every technology was chosen deliberately — here's why each one earns its place:</p>
                     <div class="stack-grid">
                         <div class="stack-item"><span class="stack-icon">⚛️</span><span class="stack-name">React</span><span class="stack-role">UI Layer</span></div>
-                        <div class="stack-item"><span class="stack-icon">🔷</span><span class="stack-name">TypeScript</span><span class="stack-role">Type Safety</span></div>
+                        <div class="stack-item"><span class="stack-icon">📘</span><span class="stack-name">TypeScript</span><span class="stack-role">Type Safety</span></div>
                         <div class="stack-item"><span class="stack-icon">⚡</span><span class="stack-name">Vite</span><span class="stack-role">Build Tool</span></div>
                         <div class="stack-item"><span class="stack-icon">🔥</span><span class="stack-name">Firebase</span><span class="stack-role">Backend</span></div>
                         <div class="stack-item"><span class="stack-icon">📄</span><span class="stack-name">pdfjs-dist</span><span class="stack-role">PDF Parsing</span></div>
-                        <div class="stack-item"><span class="stack-icon">🚀</span><span class="stack-name">Vercel</span><span class="stack-role">Hosting</span></div>
+                        <div class="stack-item"><span class="stack-icon">☁️</span><span class="stack-name">Vercel</span><span class="stack-role">Hosting</span></div>
                     </div>
                     <p><strong>Why Firebase?</strong> The real-time database allows multiple staff members to see updates instantly — no page refresh, no polling. When one receptionist checks a guest in, everyone else sees it within milliseconds.</p>
                 </div>
 
                 <div class="card">
-                    <h3>🔄 The Data Flow</h3>
+                    <h3>🗺️ The Data Flow</h3>
                     <p>From a PDF on someone's desktop to a live dashboard on every screen in the hotel:</p>
                     <div class="flow">
-                        <div class="flow-step">📄 PMS Export</div><div class="flow-arrow">→</div>
-                        <div class="flow-step">📤 File Upload</div><div class="flow-arrow">→</div>
-                        <div class="flow-step">⚙️ PDF Parser</div><div class="flow-arrow">→</div>
-                        <div class="flow-step">🔥 Firebase RTDB</div><div class="flow-arrow">→</div>
-                        <div class="flow-step">📺 Live Dashboard</div>
+                        <div class="flow-step">📄 PMS Export</div><div class="flow-arrow">➔</div>
+                        <div class="flow-step">📤 File Upload</div><div class="flow-arrow">➔</div>
+                        <div class="flow-step">⚙️ PDF Parser</div><div class="flow-arrow">➔</div>
+                        <div class="flow-step">🔥 Firebase RTDB</div><div class="flow-arrow">➔</div>
+                        <div class="flow-step">🖥️ Live Dashboard</div>
                     </div>
                     <p>The whole pipeline completes in <mark>under 3 seconds</mark> for a standard 40-room arrival sheet.</p>
                 </div>
 
                 <div class="card">
-                    <h3>🏗️ Core Modules</h3>
+                    <h3>🧱 Core Modules</h3>
                     <div class="table-wrap">
                         <table>
                             <tr><th>Module</th><th>Responsibility</th></tr>
@@ -459,7 +460,7 @@
                 </div>
 
                 <div class="card">
-                    <h3>🏨 Lake House vs Main Hotel</h3>
+                    <h3>🏠 Lake House vs Main Hotel</h3>
                     <p>Gilpin is actually <strong>two properties</strong> — the Main Hotel and the Lake House. The tool handles them separately:</p>
                     <ul>
                         <li>Each property has its own room numbering convention and PDF layout.</li>
@@ -470,7 +471,7 @@
 
                 <div class="quiz-section">
                     <div class="quiz-header">
-                        <div class="issue-badge">✏️ Knowledge Check</div>
+                        <div class="issue-badge">❓ Knowledge Check</div>
                         <h2>Architecture Mastery</h2>
                     </div>
                     <div id="quiz-container-1">
@@ -512,24 +513,24 @@
                         </div>
                     </div>
                     <div class="quiz-score" id="score-1">
-                        <div class="score-num" id="score-num-1">—</div>
-                        <h2 id="score-title-1">—</h2>
-                        <p id="score-text-1">—</p>
+                        <div class="score-num" id="score-num-1">0/4</div>
+                        <h2 id="score-title-1">Keep Studying</h2>
+                        <p id="score-text-1">Re-read the cards above before moving on.</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ═══════════════ LESSON 2 ═══════════════ -->
+        <!-- 📘 LESSON 2 -->
         <div class="lesson-view" id="lesson-2">
             <div class="content">
                 <div class="title-block">
-                    <div class="issue-badge">📰 Issue #2 · Security</div>
+                    <div class="issue-badge">🛡️ Issue #2 — Security</div>
                     <h1>Auth & Security:<br>Guarding the Kingdom</h1>
                     <div class="title-meta">
-                        <span>📚 Lesson 2 of 5</span>
+                        <span>🕒 Lesson 2 of 5</span>
                         <span>🏨 Gilpin Hotel</span>
-                        <span>✅ Completed</span>
+                        <span>✔️ Completed</span>
                     </div>
                 </div>
 
@@ -539,7 +540,7 @@
                 </div>
 
                 <div class="card">
-                    <h3>🔑 Firebase Authentication</h3>
+                    <h3>🔐 Firebase Authentication</h3>
                     <p>The tool uses <strong>Firebase Authentication</strong> as its identity layer. Staff log in with email and password — no social logins, no magic links. Clean, simple, auditable.</p>
                     <ul>
                         <li><strong>Session persistence:</strong> Firebase keeps users logged in across browser sessions using secure tokens stored in IndexedDB.</li>
@@ -548,25 +549,23 @@
                     </ul>
                 </div>
 
-                                <div class="card">
-                    <h3>?? Role-Based Access Control (RBAC)</h3>
-                    <p>Not all staff are equal. The tool enforces roles using <strong>Firebase Custom Claims</strong> � metadata attached to the user's JWT token at the server level.</p>
+                <div class="card">
+                    <h3>👥 Role-Based Access Control (RBAC)</h3>
+                    <p>Not all staff are equal. The tool enforces roles using <strong>Firebase Custom Claims</strong> — metadata attached to the user's JWT token at the server level.</p>
                     <div class="table-wrap">
                         <table>
                             <tr><th>Role</th><th>Can View</th><th>Can Edit</th><th>Can Lock</th></tr>
-                            <tr><td><mark>Admin</mark></td><td>?</td><td>?</td><td>?</td></tr>
-                            <tr><td>Staff</td><td>?</td><td>?</td><td>?</td></tr>
-                            <tr><td>Viewer</td><td>? (Revoked)</td><td>?</td><td>?</td></tr>
+                            <tr><td><mark>Admin</mark></td><td>✅</td><td>✅</td><td>✅</td></tr>
+                            <tr><td>Staff</td><td>✅</td><td>✅</td><td>❌</td></tr>
+                            <tr><td>Viewer</td><td>❌ (Revoked)</td><td>❌</td><td>❌</td></tr>
                         </table>
                     </div>
                     <p><em>Note: Viewer access was recently revoked at the database level. Only explicitly designated Staff and Admins can view session data now.</em></p>
-                    <p>Custom claims are set via the <strong>Firebase Admin SDK</strong> and are verified on both the client and in Firebase Security Rules � so they cannot be spoofed.</p>
-                </div>
                     <p>Custom claims are set via the <strong>Firebase Admin SDK</strong> and are verified on both the client and in Firebase Security Rules — so they cannot be spoofed.</p>
                 </div>
 
-                                <div class="card">
-                    <h3>??? Firebase Security Rules (Recently Hardened)</h3>
+                <div class="card">
+                    <h3>🛡️ Firebase Security Rules (Recently Hardened)</h3>
                     <p>The Realtime Database is locked down by rules that run <em>server-side</em>. Recent security audits introduced several strict enforcements:</p>
                     <ul>
                         <li><strong>Strict RBAC & Auth:</strong> All read and write operations explicitly require <code>auth != null</code> AND <code>auth.token.email != null</code> (blocking anonymous auth completely), AND the role must be exactly <code>staff</code> or <code>admin</code>.</li>
@@ -577,12 +576,12 @@
                 </div>
 
                 <div class="card">
-                    <h3>🚪 Route Guards</h3>
+                    <h3>🛤️ Route Guards</h3>
                     <p>On the client side, React routes are wrapped in <strong>auth guard components</strong> that check the user's state before rendering:</p>
                     <div class="flow">
-                        <div class="flow-step">Route Request</div><div class="flow-arrow">→</div>
-                        <div class="flow-step">Auth Check</div><div class="flow-arrow">→</div>
-                        <div class="flow-step">Role Check</div><div class="flow-arrow">→</div>
+                        <div class="flow-step">Route Request</div><div class="flow-arrow">➔</div>
+                        <div class="flow-step">Auth Check</div><div class="flow-arrow">➔</div>
+                        <div class="flow-step">Role Check</div><div class="flow-arrow">➔</div>
                         <div class="flow-step">✅ Render</div>
                     </div>
                     <p>If any check fails, the user is redirected to the login screen. This prevents even a quick flash of protected content.</p>
@@ -599,7 +598,7 @@
 
                 <div class="quiz-section">
                     <div class="quiz-header">
-                        <div class="issue-badge">✏️ Knowledge Check</div>
+                        <div class="issue-badge">❓ Knowledge Check</div>
                         <h2>Security Mastery</h2>
                     </div>
                     <div id="quiz-container-2">
@@ -641,24 +640,24 @@
                         </div>
                     </div>
                     <div class="quiz-score" id="score-2">
-                        <div class="score-num" id="score-num-2">—</div>
-                        <h2 id="score-title-2">—</h2>
-                        <p id="score-text-2">—</p>
+                        <div class="score-num" id="score-num-2">0/4</div>
+                        <h2 id="score-title-2">Keep Studying</h2>
+                        <p id="score-text-2">Re-read the cards above before moving on.</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ═══════════════ LESSON 3 ═══════════════ -->
+        <!-- 📘 LESSON 3 -->
         <div class="lesson-view" id="lesson-3">
             <div class="content">
                 <div class="title-block">
-                    <div class="issue-badge">📰 Issue #3 · Sunday, 8 March 2026</div>
+                    <div class="issue-badge">📄 Issue #3 — Data Pipeline</div>
                     <h1>The PDF Parser:<br>Turning Paper into Data</h1>
                     <div class="title-meta">
-                        <span>📚 Lesson 3 of 5</span>
+                        <span>🕒 Lesson 3 of 5</span>
                         <span>🏨 Gilpin Hotel</span>
-                        <span>✅ Completed</span>
+                        <span>✔️ Completed</span>
                     </div>
                 </div>
 
@@ -668,7 +667,7 @@
                 </div>
 
                 <div class="card">
-                    <h3>🚀 The Three-Stage Pipeline</h3>
+                    <h3>🏗️ The Three-Stage Pipeline</h3>
                     <p>The journey from a PDF file to a live dashboard session involves three critical stages in the <code>PDFService</code>.</p>
                     <ol>
                         <li><strong>File Upload:</strong> The raw PDF is received and buffered for processing.</li>
@@ -702,7 +701,7 @@
                 </div>
 
                 <div class="card">
-                    <h3>☕ Morning Briefing vs. Arrivals</h3>
+                    <h3>☀️ Morning Briefing vs. Arrivals</h3>
                     <p>The app contains two distinct parsers for two document types:</p>
                     <ul>
                         <li><strong>Arrivals Parser:</strong> Individual guest records, car registrations, room assignments.</li>
@@ -712,7 +711,7 @@
                 </div>
 
                 <div class="card">
-                    <h3>🏗️ Session Management & Sync</h3>
+                    <h3>🔄 Session Management & Sync</h3>
                     <p>Once parsed, data is pushed to <strong>Firebase Realtime Database</strong> to create a collaborative session.</p>
                     <ol>
                         <li><strong>Unique Key:</strong> Sessions are keyed by the arrival date — one session per day.</li>
@@ -732,7 +731,7 @@
 
                 <div class="quiz-section">
                     <div class="quiz-header">
-                        <div class="issue-badge">✏️ Knowledge Check</div>
+                        <div class="issue-badge">❓ Knowledge Check</div>
                         <h2>Data Pipeline Mastery</h2>
                     </div>
                     <div id="quiz-container-3">
@@ -783,24 +782,24 @@
                         </div>
                     </div>
                     <div class="quiz-score" id="score-3">
-                        <div class="score-num" id="score-num-3">—</div>
-                        <h2 id="score-title-3">—</h2>
-                        <p id="score-text-3">—</p>
+                        <div class="score-num" id="score-num-3">0/5</div>
+                        <h2 id="score-title-3">Keep Studying</h2>
+                        <p id="score-text-3">Re-read the cards above before moving on.</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ═══════════════ LESSON 4 ═══════════════ -->
+        <!-- 📘 LESSON 4 -->
         <div class="lesson-view" id="lesson-4">
             <div class="content">
                 <div class="title-block">
-                    <div class="issue-badge">📰 Issue #4 · The Engine</div>
+                    <div class="issue-badge">🔥 Issue #4 — The Engine</div>
                     <h1>Firebase RTDB:<br>The Real-Time Engine</h1>
                     <div class="title-meta">
-                        <span>📚 Lesson 4 of 5</span>
+                        <span>🕒 Lesson 4 of 5</span>
                         <span>🏨 Gilpin Hotel</span>
-                        <span>🔴 Current</span>
+                        <span>✔️ Completed</span>
                     </div>
                 </div>
 
@@ -810,8 +809,8 @@
                 </div>
 
                 <div class="card">
-                    <h3>📡 Sync vs. Fetch: The Paradigm Shift</h3>
-                    <p>Traditional apps use <strong>REST APIs</strong> (Request → Response). The Gilpin tool uses <strong>Data Synchronization</strong>.</p>
+                    <h3>⚡ Sync vs. Fetch: The Paradigm Shift</h3>
+                    <p>Traditional apps use <strong>REST APIs</strong> (Request ➔ Response). The Gilpin tool uses <strong>Data Synchronization</strong>.</p>
                     <ul>
                         <li><strong>No Polling:</strong> The client doesn't ask "Is there new data?". The server pushes data the millisecond it changes.</li>
                         <li><strong>WebSockets:</strong> A persistent connection stays open between the browser and Firebase.</li>
@@ -820,7 +819,7 @@
                 </div>
 
                 <div class="card">
-                    <h3>🌳 The Data Tree</h3>
+                    <h3>📂 The Data Tree</h3>
                     <p>Unlike SQL tables, RTDB is one giant JSON tree. We structure it for speed and security:</p>
                     <div class="table-wrap">
                         <table>
@@ -834,7 +833,7 @@
                 </div>
 
                 <div class="card">
-                    <h3>👥 Presence Tracking: Who's Online?</h3>
+                    <h3>🤝 Presence Tracking: Who's Online?</h3>
                     <p>The "Presence" system uses a special Firebase feature called <code>onDisconnect</code>.</p>
                     <ol>
                         <li>When a staff member opens the dashboard, they write their UID to <code>/presence/{sessionId}/{uid}</code>.</li>
@@ -845,7 +844,7 @@
                 </div>
 
                 <div class="card">
-                    <h3>🔐 Server-Side Enforcement</h3>
+                    <h3>🔒 Server-Side Enforcement</h3>
                     <p>We don't trust the client to validate data. Our <strong>Security Rules</strong> act as a server-side firewall:</p>
                     <ul>
                         <li><strong>Auth Guard:</strong> <code>auth != null</code> ensures only logged-in staff can see anything.</li>
@@ -866,7 +865,7 @@
 
                 <div class="quiz-section">
                     <div class="quiz-header">
-                        <div class="issue-badge">✏️ Knowledge Check</div>
+                        <div class="issue-badge">❓ Knowledge Check</div>
                         <h2>RTDB Mastery</h2>
                     </div>
                     <div id="quiz-container-4">
@@ -917,36 +916,134 @@
                         </div>
                     </div>
                     <div class="quiz-score" id="score-4">
-                        <div class="score-num" id="score-num-4">—</div>
-                        <h2 id="score-title-4">—</h2>
-                        <p id="score-text-4">—</p>
+                        <div class="score-num" id="score-num-4">0/5</div>
+                        <h2 id="score-title-4">Keep Studying</h2>
+                        <p id="score-text-4">Re-read the cards above before moving on.</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ═══════════════ LESSON 5 (locked) ═══════════════ -->
+        <!-- ✨ LESSON 5 -->
         <div class="lesson-view" id="lesson-5">
             <div class="content">
-                <div class="locked-screen">
-                    <div class="lock-icon">🔒</div>
-                    <h2>AI / Gemini Features</h2>
-                    <p>This lesson covers the AI audit system, Gemini integration, and how machine intelligence enhances the hotel workflow.</p>
-                    <div class="countdown">Unlocks in 4 days</div>
+                <div class="title-block">
+                    <div class="issue-badge">🛠️ Issue #5 — AI Integration</div>
+                    <h1>AI / Gemini Features:<br>The Intelligence Layer</h1>
+                    <div class="title-meta">
+                        <span>🕒 Lesson 5 of 5</span>
+                        <span>🏨 Gilpin Hotel</span>
+                        <span>✨ Current</span>
+                    </div>
+                </div>
+
+                <div class="quote">
+                    "AI isn't here to replace hospitality; it's here to empower it. By identifying patterns and auditing data in real-time, we free the staff to focus on the guest."
+                    <cite>— Gilpin Arrivals Tool, AI Strategy</cite>
+                </div>
+
+                <div class="card">
+                    <h3>🛠️ The AI Audit System</h3>
+                    <p>The core of the intelligence layer is the <strong>AI Audit system</strong>. It periodically scans guest records and sessions to identify inconsistencies, highlight VIPs, and predict operational needs.</p>
+                    <ul>
+                        <li><strong>Refinement:</strong> Automatically fixing common parsing errors or formatting issues.</li>
+                        <li><strong>Sentiment Analysis:</strong> Analyzing guest notes to flag specific preferences or potential issues before arrival.</li>
+                        <li><strong>Anomaly Detection:</strong> Flagging unusual booking patterns or data mismatches (e.g., room numbers that don't exist).</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>🤖 Gemini Integration</h3>
+                    <p>The tool leverages <strong>Google's Gemini models</strong> to process complex natural language data from the PDF exports.</p>
+                    <div class="stack-grid">
+                        <div class="stack-item"><span class="stack-icon">🧠</span><span class="stack-name">Gemini 1.5 Flash</span><span class="stack-role">Audit Engine</span></div>
+                        <div class="stack-item"><span class="stack-icon">⚡</span><span class="stack-name">Firebase Functions</span><span class="stack-role">Execution</span></div>
+                        <div class="stack-item"><span class="stack-icon">🛡️</span><span class="stack-name">Security Guards</span><span class="stack-role">Data Privacy</span></div>
+                    </div>
+                    <p>Gemini is used for <strong>summarizing morning briefings</strong> and generating the <strong>AI Audit reports</strong> that help managers optimize the hotel's performance.</p>
+                </div>
+
+                <div class="card">
+                    <h3>📊 Data Pipeline & UI Polish</h3>
+                    <p>Recent updates have focused on the "Production Readiness" of these AI features:</p>
+                    <ul>
+                        <li><strong>Optimized Loading:</strong> Real-time streaming of AI insights ensures no UI blocking.</li>
+                        <li><strong>Secure Routing:</strong> AI audit results are protected by the same strict RBAC as the core guest data.</li>
+                        <li><strong>Visual Feedback:</strong> New animations and status indicators show exactly when the AI is "thinking" or "auditing".</li>
+                    </ul>
+                </div>
+
+                <div class="quiz-section">
+                    <div class="quiz-header">
+                        <div class="issue-badge">✅ Knowledge Check</div>
+                        <h2>AI & Intelligence Mastery</h2>
+                    </div>
+                    <div id="quiz-container-5">
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">1. What is the primary role of the AI Audit system?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) To replace receptionists</button>
+                                <button class="option-btn" data-index="1">B) To book guests automatically</button>
+                                <button class="option-btn" data-index="2">C) To scan records for inconsistencies and operational insights</button>
+                                <button class="option-btn" data-index="3">D) To manage the hotel's social media</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">2. Which AI model is primarily used for the audit engine?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) GPT-3.5</button>
+                                <button class="option-btn" data-index="1">B) Gemini 1.5 Flash</button>
+                                <button class="option-btn" data-index="2">C) Claude 2.1</button>
+                                <button class="option-btn" data-index="3">D) Llama 3</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="0">
+                            <p class="q-text">3. How is AI processing feedback shown to the user?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Via animations and status indicators</button>
+                                <button class="option-btn" data-index="1">B) Through automated emails</button>
+                                <button class="option-btn" data-index="2">C) It isn't shown at all</button>
+                                <button class="option-btn" data-index="3">D) Using browser alert popups</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="3">
+                            <p class="q-text">4. What ensures that AI audit results are only visible to authorized staff?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Password-protected PDFs</button>
+                                <button class="option-btn" data-index="1">B) Physical locks on servers</button>
+                                <button class="option-btn" data-index="2">C) Client-side JavaScript hiding</button>
+                                <button class="option-btn" data-index="3">D) Strict Role-Based Access Control (RBAC)</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">5. What is "Sentiment Analysis" used for in this tool?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Predicting the weather</button>
+                                <button class="option-btn" data-index="1">B) Calculating room prices</button>
+                                <button class="option-btn" data-index="2">C) Flagging guest preferences or potential issues from notes</button>
+                                <button class="option-btn" data-index="3">D) Monitoring staff morale</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quiz-score" id="score-5">
+                        <div class="score-num" id="score-num-5">0/5</div>
+                        <h2 id="score-title-5">Keep Studying</h2>
+                        <p id="score-text-5">Re-read the cards above before moving on.</p>
+                    </div>
                 </div>
             </div>
         </div>
 
     </div><!-- /main-wrapper -->
 
-    <button class="back-to-top" id="backToTop" title="Back to top">↑</button>
+    <button class="back-to-top" id="backToTop" title="Back to top">➔</button>
 
     <script>
-        // ── STATE ──────────────────────────────────────
-        let currentLesson = parseInt(localStorage.getItem('currentLesson') || '4');
+        // 🛠️ STATE
+        let currentLesson = parseInt(localStorage.getItem('currentLesson') || '5');
         const quizState = {}; // track answered per lesson
 
-        // ── NAVIGATION ────────────────────────────────
+        // 🛠️ NAVIGATION
         function goToLesson(n) {
             // Hide all views
             document.querySelectorAll('.lesson-view').forEach(v => v.classList.remove('active-view'));
@@ -970,10 +1067,10 @@
 
         function showLockedToast(msg) { showToast('🔒 ' + msg); }
 
-        // ── INIT ───────────────────────────────────────
+        // 🛠️ INIT
         goToLesson(currentLesson);
 
-        // ── READING TIME ──────────────────────────────
+        // 🛠️ READING TIME
         function updateReadingTime() {
             const view = document.querySelector('.lesson-view.active-view');
             if (!view) return;
@@ -982,7 +1079,7 @@
             document.getElementById('readingTime').textContent = mins + ' min read';
         }
 
-        // ── SCROLL PROGRESS ───────────────────────────
+        // 🛠️ SCROLL PROGRESS
         window.addEventListener('scroll', () => {
             const s = document.documentElement.scrollTop;
             const h = document.documentElement.scrollHeight - document.documentElement.clientHeight;
@@ -992,12 +1089,12 @@
 
         document.getElementById('backToTop').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-        // ── HAMBURGER ─────────────────────────────────
+        // 🛠️ HAMBURGER
         function closeSidebar() { document.body.classList.remove('sidebar-open'); }
         document.getElementById('hamburger').addEventListener('click', () => document.body.classList.toggle('sidebar-open'));
         document.getElementById('overlay').addEventListener('click', closeSidebar);
 
-        // ── FOCUS MODE ────────────────────────────────
+        // 🛠️ FOCUS MODE
         const focusBtn = document.getElementById('focusToggle');
         if (localStorage.getItem('focusMode') === '1') { document.body.classList.add('focus-mode'); focusBtn.classList.add('active-btn'); }
         focusBtn.addEventListener('click', () => {
@@ -1005,31 +1102,31 @@
             const on = document.body.classList.contains('focus-mode');
             focusBtn.classList.toggle('active-btn', on);
             localStorage.setItem('focusMode', on ? '1' : '0');
-            showToast(on ? '🎯 Focus mode on' : '📖 Focus mode off');
+            showToast(on ? '🔲 Focus mode on' : '🕒 Focus mode off');
         });
 
-        // ── THEME ─────────────────────────────────────
+        // 🛠️ THEME
         const themeBtn  = document.getElementById('themeToggle');
         const themeIcon = document.getElementById('themeIcon');
         if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-mode'); themeIcon.textContent = '☀️'; }
         themeBtn.addEventListener('click', () => {
             document.body.classList.toggle('light-mode');
             const light = document.body.classList.contains('light-mode');
-            themeIcon.textContent = light ? '☀️' : '🌙';
+            themeIcon.textContent = light ? '☀️' : '🌓';
             localStorage.setItem('theme', light ? 'light' : 'dark');
         });
 
-        // ── KEYBOARD ──────────────────────────────────
+        // 🛠️ KEYBOARD
         document.addEventListener('keydown', e => {
             if (['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
             if (e.key === 'f' || e.key === 'F') focusBtn.click();
             if (e.key === 't' || e.key === 'T') themeBtn.click();
             if (e.key === 'Escape') closeSidebar();
-            if (e.key === 'ArrowRight') { const next = Math.min(currentLesson + 1, 4); goToLesson(next); }
+            if (e.key === 'ArrowRight') { const next = Math.min(currentLesson + 1, 5); goToLesson(next); }
             if (e.key === 'ArrowLeft')  { const prev = Math.max(currentLesson - 1, 1); goToLesson(prev); }
         });
 
-        // ── TOAST ─────────────────────────────────────
+        // 🛠️ TOAST
         let toastTimer;
         function showToast(msg) {
             const t = document.getElementById('toast');
@@ -1039,7 +1136,7 @@
             toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
         }
 
-        // ── QUIZ ENGINE ───────────────────────────────
+        // 🛠️ QUIZ ENGINE
         function initQuiz(lessonNum) {
             const container = document.getElementById('quiz-container-' + lessonNum);
             if (!container || quizState[lessonNum]) return;
@@ -1059,13 +1156,13 @@
                         options.forEach(o => o.classList.add('disabled'));
                         if (chosen === correct) {
                             this.classList.add('correct');
-                            this.innerHTML += ' <span>✅</span>';
+                            this.innerHTML += ' <span>✔️</span>';
                             quizState[lessonNum].score++;
                         } else {
                             this.classList.add('wrong');
                             this.innerHTML += ' <span>❌</span>';
                             options[correct].classList.add('correct');
-                            options[correct].innerHTML += ' <span>✅</span>';
+                            options[correct].innerHTML += ' <span>✔️</span>';
                         }
                         quizState[lessonNum].answered++;
                         if (quizState[lessonNum].answered === total) {
@@ -1081,9 +1178,9 @@
             const pct  = s / total;
             const box  = document.getElementById('score-' + lessonNum);
             let title, text;
-            if (pct === 1)       { title = '🎉 Perfect Score!';       text = 'Lesson ' + lessonNum + ' complete. Outstanding.'; fireConfetti(); }
+            if (pct === 1)       { title = '🌟 Perfect Score!';       text = 'Lesson ' + lessonNum + ' complete. Outstanding.'; fireConfetti(); }
             else if (pct >= 0.6) { title = '👍 Solid Understanding';  text = 'Almost there — review the missed topics above.'; }
-            else                 { title = '📖 Keep Studying';         text = 'Re-read the cards above before moving on.'; }
+            else                 { title = '📚 Keep Studying';         text = 'Re-read the cards above before moving on.'; }
             document.getElementById('score-num-' + lessonNum).textContent  = s + '/' + total;
             document.getElementById('score-title-' + lessonNum).textContent = title;
             document.getElementById('score-text-' + lessonNum).textContent  = text;
@@ -1092,9 +1189,9 @@
         }
 
         // Init quizzes for unlocked lessons
-        [1, 2, 3, 4].forEach(n => initQuiz(n));
+        [1, 2, 3, 4, 5].forEach(n => initQuiz(n));
 
-        // ── CONFETTI ──────────────────────────────────
+        // 🛠️ CONFETTI
         function fireConfetti() {
             const end = Date.now() + 3000;
             const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
@@ -1110,5 +1207,3 @@
     </script>
 </body>
 </html>
-
-

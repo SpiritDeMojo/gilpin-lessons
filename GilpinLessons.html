@@ -371,9 +371,14 @@
             <div class="nav-label">4. Firebase RTDB<span class="locked-date">The Real-Time Engine</span></div>
             <span class="nav-check">✔️</span>
         </div>
-        <div class="lesson-nav active" id="nav-5" onclick="goToLesson(5)">
+        <div class="lesson-nav" id="nav-5" onclick="goToLesson(5)">
             <span>✨</span>
             <div class="nav-label">5. AI / Gemini Features<span class="locked-date">The Intelligence Layer</span></div>
+            <span class="nav-check">✔️</span>
+        </div>
+        <div class="lesson-nav active" id="nav-6" onclick="goToLesson(6)">
+            <span>🖥️</span>
+            <div class="nav-label">6. Dashboards & Views<span class="locked-date">The Multi-View Interface</span></div>
         </div>
     </aside>
 
@@ -931,9 +936,9 @@
                     <div class="issue-badge">🛠️ Issue #5 — AI Integration</div>
                     <h1>AI / Gemini Features:<br>The Intelligence Layer</h1>
                     <div class="title-meta">
-                        <span>🕒 Lesson 5 of 5</span>
+                        <span>🕒 Lesson 5 of 6</span>
                         <span>🏨 Gilpin Hotel</span>
-                        <span>✨ Current</span>
+                        <span>✔️ Completed</span>
                     </div>
                 </div>
 
@@ -1034,13 +1039,141 @@
             </div>
         </div>
 
+        <!-- 🖥️ LESSON 6 -->
+        <div class="lesson-view" id="lesson-6">
+            <div class="content">
+                <div class="title-block">
+                    <div class="issue-badge">🖥️ Issue #6 — UI & Dashboards</div>
+                    <h1>Departmental Dashboards:<br>The Multi-View Interface</h1>
+                    <div class="title-meta">
+                        <span>🕒 Lesson 6 of 6</span>
+                        <span>🏨 Gilpin Hotel</span>
+                        <span>✨ Current</span>
+                    </div>
+                </div>
+
+                <div class="quote">
+                    "A great interface doesn't just display data; it adapts to the person using it. For a hotel to run smoothly, every department needs a window into the truth that's built for their specific needs."
+                    <cite>— Gilpin Arrivals Tool, UI Design Philosophy</cite>
+                </div>
+
+                <div class="card">
+                    <h3>🛠️ ViewManager: The Dynamic Switcher</h3>
+                    <p>At the heart of the dashboard is the <code>ViewManager</code>. This component is responsible for rendering the correct dashboard view based on the department currently selected by the user.</p>
+                    <ul>
+                        <li><strong>State-Driven:</strong> It uses the <code>dashboardView</code> state from the <code>ViewProvider</code> context.</li>
+                        <li><strong>Department-Centric:</strong> Switching views automatically filters and re-renders the UI to show only relevant data for that department (e.g., Housekeeping, Reception).</li>
+                        <li><strong>Access Controlled:</strong> The available views are restricted based on the user's role and cleared department permissions.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>📑 The 9 Key Dashboards</h3>
+                    <p>The system provides tailored views for every operational touchpoint in the hotel:</p>
+                    <div class="table-wrap">
+                        <table>
+                            <tr><th>Dashboard</th><th>Primary Audience</th><th>Key Features</th></tr>
+                            <tr><td>Reception</td><td>Front Desk</td><td>Check-ins/outs, guest management.</td></tr>
+                            <tr><td>Housekeeping</td><td>Cleaning Staff</td><td>Room status, cleaning task tracking.</td></tr>
+                            <tr><td>Handover Hub</td><td>All Staff</td><td>Shift transitions, stayover detection, AI reports.</td></tr>
+                            <tr><td>Bulletin</td><td>All Staff</td><td>Daily updates, system-wide alerts via Firebase.</td></tr>
+                            <tr><td>Maintenance</td><td>Engineering</td><td>Repair tracking and room inspections.</td></tr>
+                            <tr><td>Checkouts</td><td>Reception/Mgmt</td><td>Post-departure tracking and feedback.</td></tr>
+                            <tr><td>Statistics</td><td>Management</td><td>Occupancy and booking analytics.</td></tr>
+                            <tr><td>Admin Panel</td><td>Admins</td><td>User roles, permissions, and system config.</td></tr>
+                            <tr><td>Special Features</td><td>Designated Roles</td><td>Custom tools as needed.</td></tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🔘 GuestRow: Inline Operational Control</h3>
+                    <p>The <code>GuestRow</code> is where most interactions happen. It's designed for maximum efficiency without navigating away from the dashboard:</p>
+                    <ul>
+                        <li><strong>Inline Editing:</strong> Most fields (notes, room assignments) can be edited directly. Changes sync to Firebase the moment you finish typing.</li>
+                        <li><strong>Status Flags:</strong> Visual icons quickly highlight VIP status, dietary requirements, or specific guest needs.</li>
+                        <li><strong>Real-Time Feedback:</strong> Spinners and color changes indicate when a value is syncing or has been saved successfully.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>🛡️ Department Access Control (UI Level)</h3>
+                    <p>Beyond the core Firebase Security Rules, the UI implements <strong>Department Access Control</strong> to ensure staff only see what they need to see.</p>
+                    <ul>
+                        <li><strong>FULL_ACCESS_DEPTS:</strong> Certain roles (like Admin and Senior Management) have unrestricted access to all dashboard views.</li>
+                        <li><strong>Restricted Access:</strong> Staff in specific departments (e.g., Maintenance) are automatically routed to their relevant dashboard and may be blocked from viewing sensitive financial statistics.</li>
+                        <li><strong>Navigation Guards:</strong> The Navbar dynamically hides buttons for dashboards that the current user doesn't have permission to access.</li>
+                    </ul>
+                </div>
+
+                <div class="quiz-section">
+                    <div class="quiz-header">
+                        <div class="issue-badge">❓ Knowledge Check</div>
+                        <h2>UI & Dashboard Mastery</h2>
+                    </div>
+                    <div id="quiz-container-6">
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">1. Which component is responsible for rendering different dashboards based on the selected department?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) GuestRow</button>
+                                <button class="option-btn" data-index="1">B) ViewManager</button>
+                                <button class="option-btn" data-index="2">C) PDFService</button>
+                                <button class="option-btn" data-index="3">D) Navbar</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="3">
+                            <p class="q-text">2. Which dashboard is specifically designed for shift transitions and stayover detection?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Reception</button>
+                                <button class="option-btn" data-index="1">B) Statistics</button>
+                                <button class="option-btn" data-index="2">C) Maintenance</button>
+                                <button class="option-btn" data-index="3">D) Handover Hub</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="0">
+                            <p class="q-text">3. What is the benefit of "Inline Editing" in the <code>GuestRow</code> component?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) It allows staff to update data instantly without leaving the dashboard</button>
+                                <button class="option-btn" data-index="1">B) It makes the PDF files smaller</button>
+                                <button class="option-btn" data-index="2">C) It automatically logs the user out</button>
+                                <button class="option-btn" data-index="3">D) It encrypts the room numbers</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">4. How does the UI handle users trying to access dashboards they aren't permitted to see?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) It displays an "Access Denied" error for every dashboard</button>
+                                <button class="option-btn" data-index="1">B) It requires a separate password for each tab</button>
+                                <button class="option-btn" data-index="2">C) It dynamically hides buttons for dashboards the user cannot access</button>
+                                <button class="option-btn" data-index="3">D) It allows everyone to see everything</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">5. Where are global announcements and system-wide alerts typically displayed?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Statistics Dashboard</button>
+                                <button class="option-btn" data-index="1">B) Bulletin Dashboard</button>
+                                <button class="option-btn" data-index="2">C) Admin Panel</button>
+                                <button class="option-btn" data-index="3">D) Maintenance Dashboard</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quiz-score" id="score-6">
+                        <div class="score-num" id="score-num-6">0/5</div>
+                        <h2 id="score-title-6">Keep Studying</h2>
+                        <p id="score-text-6">Re-read the cards above before moving on.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div><!-- /main-wrapper -->
 
     <button class="back-to-top" id="backToTop" title="Back to top">➔</button>
 
     <script>
         // 🛠️ STATE
-        let currentLesson = parseInt(localStorage.getItem('currentLesson') || '5');
+        let currentLesson = parseInt(localStorage.getItem('currentLesson') || '6');
         const quizState = {}; // track answered per lesson
 
         // 🛠️ NAVIGATION
@@ -1122,7 +1255,7 @@
             if (e.key === 'f' || e.key === 'F') focusBtn.click();
             if (e.key === 't' || e.key === 'T') themeBtn.click();
             if (e.key === 'Escape') closeSidebar();
-            if (e.key === 'ArrowRight') { const next = Math.min(currentLesson + 1, 5); goToLesson(next); }
+            if (e.key === 'ArrowRight') { const next = Math.min(currentLesson + 1, 6); goToLesson(next); }
             if (e.key === 'ArrowLeft')  { const prev = Math.max(currentLesson - 1, 1); goToLesson(prev); }
         });
 
@@ -1189,7 +1322,7 @@
         }
 
         // Init quizzes for unlocked lessons
-        [1, 2, 3, 4, 5].forEach(n => initQuiz(n));
+        [1, 2, 3, 4, 5, 6].forEach(n => initQuiz(n));
 
         // 🛠️ CONFETTI
         function fireConfetti() {

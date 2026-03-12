@@ -376,9 +376,14 @@
             <div class="nav-label">5. AI / Gemini Features<span class="locked-date">The Intelligence Layer</span></div>
             <span class="nav-check">✔️</span>
         </div>
-        <div class="lesson-nav active" id="nav-6" onclick="goToLesson(6)">
+        <div class="lesson-nav" id="nav-6" onclick="goToLesson(6)">
             <span>🖥️</span>
             <div class="nav-label">6. Dashboards & Views<span class="locked-date">The Multi-View Interface</span></div>
+            <span class="nav-check">✔️</span>
+        </div>
+        <div class="lesson-nav active" id="nav-7" onclick="goToLesson(7)">
+            <span>🛡️</span>
+            <div class="nav-label">7. Production Readiness<span class="locked-date">Audits & Optimizations</span></div>
         </div>
     </aside>
 
@@ -402,7 +407,7 @@
                     <div class="issue-badge">📖 Issue #1 — Foundations</div>
                     <h1>The Big Picture:<br>Architecture & Overview</h1>
                     <div class="title-meta">
-                        <span>🕒 Lesson 1 of 5</span>
+                        <span>🕒 Lesson 1 of 7</span>
                         <span>🏨 Gilpin Hotel</span>
                         <span>✔️ Completed</span>
                     </div>
@@ -533,7 +538,7 @@
                     <div class="issue-badge">🛡️ Issue #2 — Security</div>
                     <h1>Auth & Security:<br>Guarding the Kingdom</h1>
                     <div class="title-meta">
-                        <span>🕒 Lesson 2 of 5</span>
+                        <span>🕒 Lesson 2 of 7</span>
                         <span>🏨 Gilpin Hotel</span>
                         <span>✔️ Completed</span>
                     </div>
@@ -660,7 +665,7 @@
                     <div class="issue-badge">📄 Issue #3 — Data Pipeline</div>
                     <h1>The PDF Parser:<br>Turning Paper into Data</h1>
                     <div class="title-meta">
-                        <span>🕒 Lesson 3 of 5</span>
+                        <span>🕒 Lesson 3 of 7</span>
                         <span>🏨 Gilpin Hotel</span>
                         <span>✔️ Completed</span>
                     </div>
@@ -802,7 +807,7 @@
                     <div class="issue-badge">🔥 Issue #4 — The Engine</div>
                     <h1>Firebase RTDB:<br>The Real-Time Engine</h1>
                     <div class="title-meta">
-                        <span>🕒 Lesson 4 of 5</span>
+                        <span>🕒 Lesson 4 of 7</span>
                         <span>🏨 Gilpin Hotel</span>
                         <span>✔️ Completed</span>
                     </div>
@@ -936,7 +941,7 @@
                     <div class="issue-badge">🛠️ Issue #5 — AI Integration</div>
                     <h1>AI / Gemini Features:<br>The Intelligence Layer</h1>
                     <div class="title-meta">
-                        <span>🕒 Lesson 5 of 6</span>
+                        <span>🕒 Lesson 5 of 7</span>
                         <span>🏨 Gilpin Hotel</span>
                         <span>✔️ Completed</span>
                     </div>
@@ -1046,9 +1051,9 @@
                     <div class="issue-badge">🖥️ Issue #6 — UI & Dashboards</div>
                     <h1>Departmental Dashboards:<br>The Multi-View Interface</h1>
                     <div class="title-meta">
-                        <span>🕒 Lesson 6 of 6</span>
+                        <span>🕒 Lesson 6 of 7</span>
                         <span>🏨 Gilpin Hotel</span>
-                        <span>✨ Current</span>
+                        <span>✔️ Completed</span>
                     </div>
                 </div>
 
@@ -1167,13 +1172,132 @@
             </div>
         </div>
 
+        <!-- 🛡️ LESSON 7 -->
+        <div class="lesson-view" id="lesson-7">
+            <div class="content">
+                <div class="title-block">
+                    <div class="issue-badge">🛡️ Issue #7 — Production Readiness</div>
+                    <h1>Production Readiness:<br>Audits & Optimizations</h1>
+                    <div class="title-meta">
+                        <span>🕒 Lesson 7 of 7</span>
+                        <span>🏨 Gilpin Hotel</span>
+                        <span>🚀 Latest Audit Findings</span>
+                    </div>
+                </div>
+
+                <div class="quote">
+                    "Quality is not an act, it is a habit. Production readiness means building systems that are not just functional, but resilient, secure, and self-correcting."
+                    <cite>— Gilpin Arrivals Tool, Production Standards</cite>
+                </div>
+
+                <div class="card">
+                    <h3>🤖 AI Audit: Intelligence with Integrity</h3>
+                    <p>The AI layer is audited for both accuracy and privacy. We use a multi-model approach to balance cost and reasoning power:</p>
+                    <ul>
+                        <li><strong>Model Selection:</strong> <code>Gemini 3 Pro</code> handles high-complexity reasoning (Refinement, Itineraries), while <code>Gemini 2.5 Flash</code> powers high-volume tasks (Analytics, Sentiment).</li>
+                        <li><strong>Anonymization Layer:</strong> The <code>anonymize.ts</code> utility strips PII (names, registrations) before processing, restoring them locally via a mapping system to maintain GDPR compliance.</li>
+                        <li><strong>Reliability:</strong> Exponential backoff and retry logic ensure transient API errors don't break the user experience.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>📄 Pipeline Audit: Resilience in Parsing</h3>
+                    <p>Our data pipeline is designed to survive the messy reality of PDF exports:</p>
+                    <ul>
+                        <li><strong>Coordinate-Based Parsing:</strong> By tracking X/Y positions, the parser understands the visual "columns" of the arrival sheet even when spacing varies.</li>
+                        <li><strong>Regex Validation:</strong> Strict patterns for dates (<code>DD/MM/YYYY</code>) and guest IDs prevent malformed data from entering the sync engine.</li>
+                        <li><strong>Failure Mode Detection:</strong> The #1 cause of parsing issues is identified as <strong>Format Inconsistency</strong> (shifting columns in the PMS export), which we mitigate through layout-aware coordinate maps.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>🔐 Security Audit: Hardening the Stack</h3>
+                    <p>A recent deep-dive audit has hardened the system against unauthorized access and data tampering:</p>
+                    <ul>
+                        <li><strong>HMAC Session Tokens:</strong> API requests are secured with <code>timestamp.hmac</code> tokens generated server-side, preventing token spoofing or replay attacks.</li>
+                        <li><strong>RTDB Rule Enforcement:</strong> Firebase Security Rules now strictly validate data types, string lengths, and role-based path access (blocking all anonymous traffic).</li>
+                        <li><strong>RBAC Granularity:</strong> Roles (Admin, Staff, Viewer) and Departments (REC, HK, etc.) ensure users only see the specific data required for their shift.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>🖥️ UI/UX Audit: Adaptive Efficiency</h3>
+                    <p>The dashboard is optimized for the high-pressure environment of the front desk:</p>
+                    <ul>
+                        <li><strong>Handover Hub:</strong> A dedicated view for shift transitions that automatically detects stayover guests and generates AI-powered briefings.</li>
+                        <li><strong>ViewManager:</strong> Dynamically routes users to department-specific dashboards (9 distinct views) while enforcing navigation guards.</li>
+                        <li><strong>Inline Speed:</strong> <code>GuestRow</code> components allow real-time editing and status updates that sync to all other staff members in milliseconds.</li>
+                    </ul>
+                </div>
+
+                <div class="quiz-section">
+                    <div class="quiz-header">
+                        <div class="issue-badge">❓ Knowledge Check</div>
+                        <h2>Production Readiness Mastery</h2>
+                    </div>
+                    <div id="quiz-container-7">
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">1. What is the primary purpose of the <code>anonymize.ts</code> utility?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) To speed up PDF parsing</button>
+                                <button class="option-btn" data-index="1">B) To strip PII before sending data to AI models for GDPR compliance</button>
+                                <button class="option-btn" data-index="2">C) To translate guest names into different languages</button>
+                                <button class="option-btn" data-index="3">D) To encrypt the database backup</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">2. Which model is used for complex reasoning tasks like Refinement and Itineraries?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Gemini 2.5 Flash</button>
+                                <button class="option-btn" data-index="1">B) GPT-4o Mini</button>
+                                <button class="option-btn" data-index="2">C) Gemini 3 Pro</button>
+                                <button class="option-btn" data-index="3">D) Claude Haiku</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">3. What is the most common failure mode identified in the PDF parsing pipeline?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Firebase being offline</button>
+                                <button class="option-btn" data-index="1">B) Running out of memory</button>
+                                <button class="option-btn" data-index="2">C) Format inconsistencies or column shifts in the PMS PDF</button>
+                                <button class="option-btn" data-index="3">D) Invalid user passwords</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">4. How are API requests secured beyond basic Firebase Auth?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Using cookies only</button>
+                                <button class="option-btn" data-index="1">B) Using HMAC session tokens (timestamp.hmac)</button>
+                                <button class="option-btn" data-index="2">C) They aren't; Firebase handles everything</button>
+                                <button class="option-btn" data-index="3">D) By checking the user's IP address every time</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="3">
+                            <p class="q-text">5. Which feature is specifically designed to handle shift transitions and stayover guest detection?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Statistics Dashboard</button>
+                                <button class="option-btn" data-index="1">B) GuestRow component</button>
+                                <button class="option-btn" data-index="2">C) ViewManager</button>
+                                <button class="option-btn" data-index="3">D) Handover Hub</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quiz-score" id="score-7">
+                        <div class="score-num" id="score-num-7">0/5</div>
+                        <h2 id="score-title-7">Keep Studying</h2>
+                        <p id="score-text-7">Re-read the cards above before moving on.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div><!-- /main-wrapper -->
 
     <button class="back-to-top" id="backToTop" title="Back to top">➔</button>
 
     <script>
         // 🛠️ STATE
-        let currentLesson = parseInt(localStorage.getItem('currentLesson') || '6');
+        let currentLesson = parseInt(localStorage.getItem('currentLesson') || '7');
         const quizState = {}; // track answered per lesson
 
         // 🛠️ NAVIGATION
@@ -1255,7 +1379,7 @@
             if (e.key === 'f' || e.key === 'F') focusBtn.click();
             if (e.key === 't' || e.key === 'T') themeBtn.click();
             if (e.key === 'Escape') closeSidebar();
-            if (e.key === 'ArrowRight') { const next = Math.min(currentLesson + 1, 6); goToLesson(next); }
+            if (e.key === 'ArrowRight') { const next = Math.min(currentLesson + 1, 7); goToLesson(next); }
             if (e.key === 'ArrowLeft')  { const prev = Math.max(currentLesson - 1, 1); goToLesson(prev); }
         });
 
@@ -1322,7 +1446,7 @@
         }
 
         // Init quizzes for unlocked lessons
-        [1, 2, 3, 4, 5, 6].forEach(n => initQuiz(n));
+        [1, 2, 3, 4, 5, 6, 7].forEach(n => initQuiz(n));
 
         // 🛠️ CONFETTI
         function fireConfetti() {

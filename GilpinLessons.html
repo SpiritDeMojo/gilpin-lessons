@@ -381,9 +381,14 @@
             <div class="nav-label">6. Dashboards & Views<span class="locked-date">The Multi-View Interface</span></div>
             <span class="nav-check">✔️</span>
         </div>
-        <div class="lesson-nav active" id="nav-7" onclick="goToLesson(7)">
+        <div class="lesson-nav" id="nav-7" onclick="goToLesson(7)">
             <span>🛡️</span>
             <div class="nav-label">7. Production Readiness<span class="locked-date">Audits & Optimizations</span></div>
+            <span class="nav-check">✔️</span>
+        </div>
+        <div class="lesson-nav active" id="nav-8" onclick="goToLesson(8)">
+            <span>🌐</span>
+            <div class="nav-label">8. Advanced Integration<span class="locked-date">Global Standards & AI</span></div>
         </div>
     </aside>
 
@@ -1173,15 +1178,137 @@
         </div>
 
         <!-- 🛡️ LESSON 7 -->
+
+        <!-- 🌐 LESSON 8 -->
+        <div class="lesson-view" id="lesson-8">
+            <div class="content">
+                <div class="title-block">
+                    <div class="issue-badge">🌐 Issue #8 — Global Standards</div>
+                    <h1>Advanced Integration:<br>Global Standards & AI Resilience</h1>
+                    <div class="title-meta">
+                        <span>🕒 Lesson 8 of 8</span>
+                        <span>🏨 Gilpin Hotel</span>
+                        <span>✨ Latest Developments</span>
+                    </div>
+                </div>
+
+                <div class="quote">
+                    "Building for tomorrow means anticipating global demands today. Our AI integrations are not just smart; they're secure, compliant, and architected for worldwide excellence."
+                    <cite>— Gilpin Arrivals Tool, Global Strategy</cite>
+                </div>
+
+                <div class="card">
+                    <h3>🧠 Strategic AI Model Orchestration</h3>
+                    <p>The Gilpin Arrivals Tool employs a sophisticated strategy for integrating AI, carefully selecting models based on task complexity and cost-efficiency. This ensures optimal performance without unnecessary resource consumption.</p>
+                    <ul>
+                        <li><strong>Gemini 3 Pro:</strong> Utilized for high-complexity tasks such as <strong>refining guest records</strong> with detailed PMS notes and generating bespoke <strong>itineraries</strong>. Its advanced reasoning capabilities are crucial here.</li>
+                        <li><strong>Gemini 2.5 Flash:</strong> Powers high-volume, lower-complexity tasks including <strong>analytics generation</strong>, <strong>sentiment analysis</strong> from guest notes, cleaning order suggestions, upgrade suggestions, and collating <strong>reviews</strong>. This model provides speed and efficiency.</li>
+                        <li><strong>Cost-Efficiency:</strong> This tiered model approach allows for a balance between processing power and operational costs, ensuring that advanced AI is used where it truly adds value.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>🔒 End-to-End Data Anonymization & GDPR Compliance</h3>
+                    <p>Protecting guest privacy is paramount. The tool implements a robust anonymization layer to ensure GDPR and global data protection standards are met.</p>
+                    <ul>
+                        <li><strong>PII Stripping:</strong> Before any sensitive guest data (names, car registrations, booking stream details) is sent to AI endpoints, it is meticulously stripped and anonymized using the <code>anonymize.ts</code> utility.</li>
+                        <li><strong>Tokenization:</strong> Real guest information is temporarily replaced with generic tokens (e.g., "Guest A") during AI processing.</li>
+                        <li><strong>Local Restoration:</strong> Upon receiving AI-processed results, the original guest information is safely restored locally using a secure name mapping system, ensuring PII is never exposed to external AI models.</li>
+                        <li><strong>Firebase Security Rules:</strong> Further reinforced by server-side Firebase Security Rules that strictly control access based on roles and department, preventing unauthorized exposure.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>🛡️ Robust Session Management & API Security</h3>
+                    <p>Ensuring secure and seamless operations, the tool implements advanced session management and API protection mechanisms.</p>
+                    <ul>
+                        <li><strong>HMAC Session Tokens:</strong> Beyond Firebase ID Tokens, API requests are secured with server-generated HMAC session tokens (format: <code>timestamp.hmac</code>). These tokens are SHA-256 hashed with a secret key (<code>process.env.AUTH_SECRET</code>) and have an 8-hour expiry, protecting against token spoofing and replay attacks.</li>
+                        <li><strong>Firebase Authentication & RBAC:</strong> Users authenticate via Firebase, and custom claims enforce Role-Based Access Control (<code>admin</code>, <code>staff</code>, <code>viewer</code>) and department-specific permissions.</li>
+                        <li><strong>CORS & Origin Validation:</strong> Cross-Origin Resource Sharing (CORS) is strictly enforced with whitelisted origins (<code>localhost</code>, <code>*.vercel.app</code>, custom domains) at the API level, preventing unauthorized cross-origin requests.</li>
+                        <li><strong>Live Token Endpoint:</strong> The endpoint serving sensitive API keys (e.g., Gemini API key) is protected by HMAC Bearer tokens, origin validation, and strict no-cache headers.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>⚡ Real-Time AI & Resilient Data Pipelines</h3>
+                    <p>The tool is designed for high availability and responsiveness, incorporating real-time AI capabilities and robust error handling for data pipelines.</p>
+                    <ul>
+                        <li><strong>Live Voice Assistant:</strong> Features a real-time WebSocket connection for audio streaming, enabling instantaneous transcription and department-specific AI interactions. This ensures dynamic, contextual conversations with AI.</li>
+                        <li><strong>Batch Processing & Retry Logic:</strong> Guests are processed in manageable chunks, and requests that encounter transient errors are retried with exponential backoff, preventing system overload and ensuring data integrity.</li>
+                        <li><strong>Comprehensive Error Handling:</strong> The <code>geminiService.ts</code> implements robust error capturing, logging, and user-friendly notifications for API failures.</li>
+                        <li><strong>PDF Parser Resilience:</strong> Despite format inconsistencies being the most common failure mode, coordinate-based parsing and strict regex patterns ensure the data pipeline remains resilient, extracting structured guest data reliably.</li>
+                    </ul>
+                </div>
+
+                <div class="quiz-section">
+                    <div class="quiz-header">
+                        <div class="issue-badge">❓ Knowledge Check</div>
+                        <h2>Advanced Integration Mastery</h2>
+                    </div>
+                    <div id="quiz-container-8">
+                        <div class="quiz-question" data-answer="0">
+                            <p class="q-text">1. Which Gemini model is typically used for high-complexity tasks like itinerary generation?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Gemini 3 Pro</button>
+                                <button class="option-btn" data-index="1">B) Gemini 2.5 Flash</button>
+                                <button class="option-btn" data-index="2">C) Gemini Ultra</button>
+                                <button class="option-btn" data-index="3">D) Gemini Nano</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">2. What is the primary purpose of the <code>anonymize.ts</code> utility?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) To encrypt all database records</button>
+                                <button class="option-btn" data-index="1">B) To strip PII before sending data to AI endpoints for GDPR compliance</button>
+                                <button class="option-btn" data-index="2">C) To compress PDF files for faster upload</button>
+                                <button class="option-btn" data-index="3">D) To generate unique session IDs</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="0">
+                            <p class="q-text">3. What is the structure of the HMAC session token used for API requests?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) <code>timestamp.hmac</code></button>
+                                <button class="option-btn" data-index="1">B) A simple UUID</button>
+                                <button class="option-btn" data-index="2">C) An unhashed password</button>
+                                <button class="option-btn" data-index="3">D) A Firebase ID Token directly</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">4. How does the Live Voice Assistant feature handle real-time audio?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) By polling an audio API every second</button>
+                                <button class="option-btn" data-index="1">B) By storing audio files in Firebase Storage</button>
+                                <button class="option-btn" data-index="2">C) Via a real-time WebSocket connection for streaming</button>
+                                <button class="option-btn" data-index="3">D) It only processes pre-recorded audio</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">5. What mechanism is in place to handle transient API errors for AI requests?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Immediate failure and error message</button>
+                                <button class="option-btn" data-index="1">B) Exponential backoff and retry logic</button>
+                                <button class="option-btn" data-index="2">C) Manual intervention by an admin</button>
+                                <button class="option-btn" data-index="3">D) Redirecting the request to a different AI model immediately</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quiz-score" id="score-8">
+                        <div class="score-num" id="score-num-8">0/5</div>
+                        <h2 id="score-title-8">Keep Studying</h2>
+                        <p id="score-text-8">Re-read the cards above before moving on.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="lesson-view" id="lesson-7">
             <div class="content">
                 <div class="title-block">
                     <div class="issue-badge">🛡️ Issue #7 — Production Readiness</div>
                     <h1>Production Readiness:<br>Audits & Optimizations</h1>
                     <div class="title-meta">
-                        <span>🕒 Lesson 7 of 7</span>
+                        <span>🕒 Lesson 7 of 8</span>
                         <span>🏨 Gilpin Hotel</span>
-                        <span>🚀 Latest Audit Findings</span>
+                        <span>✔️ Completed</span>
                     </div>
                 </div>
 
@@ -1297,7 +1424,7 @@
 
     <script>
         // 🛠️ STATE
-        let currentLesson = parseInt(localStorage.getItem('currentLesson') || '7');
+        let currentLesson = parseInt(localStorage.getItem('currentLesson') || '8');
         const quizState = {}; // track answered per lesson
 
         // 🛠️ NAVIGATION
@@ -1379,7 +1506,7 @@
             if (e.key === 'f' || e.key === 'F') focusBtn.click();
             if (e.key === 't' || e.key === 'T') themeBtn.click();
             if (e.key === 'Escape') closeSidebar();
-            if (e.key === 'ArrowRight') { const next = Math.min(currentLesson + 1, 7); goToLesson(next); }
+            if (e.key === 'ArrowRight') { const next = Math.min(currentLesson + 1, 8); goToLesson(next); }
             if (e.key === 'ArrowLeft')  { const prev = Math.max(currentLesson - 1, 1); goToLesson(prev); }
         });
 
@@ -1446,7 +1573,7 @@
         }
 
         // Init quizzes for unlocked lessons
-        [1, 2, 3, 4, 5, 6, 7].forEach(n => initQuiz(n));
+        [1, 2, 3, 4, 5, 6, 7, 8].forEach(n => initQuiz(n));
 
         // 🛠️ CONFETTI
         function fireConfetti() {

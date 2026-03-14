@@ -465,7 +465,88 @@
                         <div class="stack-item"><span class="stack-icon">☁️</span><span class="stack-name">Vercel</span><span class="stack-role">Hosting</span></div>
                     </div>
                     <p><strong>Why Firebase?</strong> The real-time database allows multiple staff members to see updates instantly — no page refresh, no polling. When one receptionist checks a guest in, everyone else sees it within milliseconds.</p>
-                </div>
+                </div><div class="deep-dive-content"><div class="card">
+<p>Welcome to the Developer Edition deep-dive of the Gilpin Arrivals Tool. In this lesson, we break down the architecture from a high-level concept into actual code. The tool uses a modern stack: <strong>React (UI), TypeScript (Type Safety), Vite (Build Tool), Firebase Realtime Database (Backend), and pdfjs-dist (PDF Parsing)</strong>.</p>
+</div>
+<div class="card">
+<h3>💻 1. Project Initialization &amp; Firebase Setup</h3>
+<p>The heart of the Gilpin Arrivals Tool relies on Firebase to maintain state across all connected clients. Below is how we initialize the Firebase application and ensure we only have one instance running.</p>
+<pre><code class="language-typescript">// src/services/firebaseConfig.ts
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getDatabase } from 'firebase/database';
+import { getAuth } from 'firebase/auth';
+
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
+};
+
+// Singleton pattern to prevent re-initialization in React strict mode or HMR
+export const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+export const db = getDatabase(app);
+export const auth = getAuth(app);
+</code></pre>
+
+</div>
+<div class="card">
+<h3>💻 2. Core Modules and Types</h3>
+<p>TypeScript helps us define exactly what a "Session" and a "Guest" look like. This guarantees that our React UI and Firebase database perfectly align.</p>
+<pre><code class="language-typescript">// src/types/GuestData.ts
+export interface GuestData {
+  id: string;
+  roomNumber: string;
+  guestName: string;
+  isVIP: boolean;
+  dietaryRequirements: string[];
+  carRegistration?: string;
+  notes: string;
+  property: 'MainHotel' | 'LakeHouse';
+}
+
+export interface ArrivalSession {
+  sessionId: string;      // Format: YYYY-MM-DD
+  date: string;
+  isLocked: boolean;
+  guests: Record&lt;string, GuestData&gt;;
+  lastUpdated: number;
+}
+</code></pre>
+
+</div>
+<div class="card">
+<h3>💻 3. The React Entry Point (Vite)</h3>
+<p>Our Vite entrypoint wraps the application in the required context providers, like AuthProvider and ViewProvider, setting the stage for the departmental dashboards.</p>
+<pre><code class="language-tsx">// src/main.tsx
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { App } from './App';
+import { AuthProvider } from './context/AuthContext';
+import { ViewProvider } from './context/ViewContext';
+import './index.css';
+
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+  &lt;React.StrictMode&gt;
+    &lt;AuthProvider&gt;
+      &lt;ViewProvider&gt;
+        &lt;App /&gt;
+      &lt;/ViewProvider&gt;
+    &lt;/AuthProvider&gt;
+  &lt;/React.StrictMode&gt;
+);
+</code></pre>
+
+</div>
+<div class="card">
+<h3>💻 Summary</h3>
+<p>By typing our data and initializing a singleton Firebase instance, we've set the stage for real-time collaboration. The real magic happens when we pipe the PDF data into these structures, which we will explore in subsequent lessons.</p>
+
+</div>
+</div>
 
                 <div class="card">
                     <h3>🗺️ The Data Flow</h3>
@@ -553,88 +634,7 @@
                         <p id="score-text-1">Re-read the cards above before moving on.</p>
                     </div>
                 </div>
-            <div class="deep-dive-content"><div class="card">
-<p>Welcome to the Developer Edition deep-dive of the Gilpin Arrivals Tool. In this lesson, we break down the architecture from a high-level concept into actual code. The tool uses a modern stack: <strong>React (UI), TypeScript (Type Safety), Vite (Build Tool), Firebase Realtime Database (Backend), and pdfjs-dist (PDF Parsing)</strong>.</p>
-</div>
-<div class="card">
-<h3>💻 1. Project Initialization &amp; Firebase Setup</h3>
-<p>The heart of the Gilpin Arrivals Tool relies on Firebase to maintain state across all connected clients. Below is how we initialize the Firebase application and ensure we only have one instance running.</p>
-<pre><code class="language-typescript">// src/services/firebaseConfig.ts
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getDatabase } from 'firebase/database';
-import { getAuth } from 'firebase/auth';
-
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
-};
-
-// Singleton pattern to prevent re-initialization in React strict mode or HMR
-export const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-export const db = getDatabase(app);
-export const auth = getAuth(app);
-</code></pre>
-
-</div>
-<div class="card">
-<h3>💻 2. Core Modules and Types</h3>
-<p>TypeScript helps us define exactly what a "Session" and a "Guest" look like. This guarantees that our React UI and Firebase database perfectly align.</p>
-<pre><code class="language-typescript">// src/types/GuestData.ts
-export interface GuestData {
-  id: string;
-  roomNumber: string;
-  guestName: string;
-  isVIP: boolean;
-  dietaryRequirements: string[];
-  carRegistration?: string;
-  notes: string;
-  property: 'MainHotel' | 'LakeHouse';
-}
-
-export interface ArrivalSession {
-  sessionId: string;      // Format: YYYY-MM-DD
-  date: string;
-  isLocked: boolean;
-  guests: Record&lt;string, GuestData&gt;;
-  lastUpdated: number;
-}
-</code></pre>
-
-</div>
-<div class="card">
-<h3>💻 3. The React Entry Point (Vite)</h3>
-<p>Our Vite entrypoint wraps the application in the required context providers, like AuthProvider and ViewProvider, setting the stage for the departmental dashboards.</p>
-<pre><code class="language-tsx">// src/main.tsx
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { App } from './App';
-import { AuthProvider } from './context/AuthContext';
-import { ViewProvider } from './context/ViewContext';
-import './index.css';
-
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  &lt;React.StrictMode&gt;
-    &lt;AuthProvider&gt;
-      &lt;ViewProvider&gt;
-        &lt;App /&gt;
-      &lt;/ViewProvider&gt;
-    &lt;/AuthProvider&gt;
-  &lt;/React.StrictMode&gt;
-);
-</code></pre>
-
-</div>
-<div class="card">
-<h3>💻 Summary</h3>
-<p>By typing our data and initializing a singleton Firebase instance, we've set the stage for real-time collaboration. The real magic happens when we pipe the PDF data into these structures, which we will explore in subsequent lessons.</p>
-
-</div>
-</div></div>
+            </div>
         </div>
 
         <!-- 📘 LESSON 2 -->
@@ -678,90 +678,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
                     </div>
                     <p><em>Note: Viewer access was recently revoked at the database level. Only explicitly designated Staff and Admins can view session data now.</em></p>
                     <p>Custom claims are set via the <strong>Firebase Admin SDK</strong> and are verified on both the client and in Firebase Security Rules — so they cannot be spoofed.</p>
-                </div>
-
-                <div class="card">
-                    <h3>🛡️ Firebase Security Rules (Recently Hardened)</h3>
-                    <p>The Realtime Database is locked down by rules that run <em>server-side</em>. Recent security audits introduced several strict enforcements:</p>
-                    <ul>
-                        <li><strong>Strict RBAC &amp; Auth:</strong> All read and write operations explicitly require <code>auth != null</code> AND <code>auth.token.email != null</code> (blocking anonymous auth completely), AND the role must be exactly <code>staff</code> or <code>admin</code>.</li>
-                        <li><strong>Payload Validation:</strong> Every single field (like guest notes, room names, etc.) is strictly validated for type and length (e.g., <code>newData.isString() &amp;&amp; newData.val().length &lt;= 5000</code>) to prevent payload injection or database bloat.</li>
-                        <li><strong>Asymmetric Access:</strong> Nodes like <code>heartbeat</code> are write-only (reads are blocked to prevent scraping), while <code>analytics.snapshots</code> are read-only (prevents client-side tampering).</li>
-                        <li><strong>Default Deny:</strong> A catch-all <code>$other</code> rule explicitly blocks any reads or writes to undefined nodes.</li>
-                    </ul>
-                </div>
-
-                <div class="card">
-                    <h3>🛤️ Route Guards</h3>
-                    <p>On the client side, React routes are wrapped in <strong>auth guard components</strong> that check the user's state before rendering:</p>
-                    <div class="flow">
-                        <div class="flow-step">Route Request</div><div class="flow-arrow">➔</div>
-                        <div class="flow-step">Auth Check</div><div class="flow-arrow">➔</div>
-                        <div class="flow-step">Role Check</div><div class="flow-arrow">➔</div>
-                        <div class="flow-step">✅ Render</div>
-                    </div>
-                    <p>If any check fails, the user is redirected to the login screen. This prevents even a quick flash of protected content.</p>
-                </div>
-
-                <div class="card">
-                    <h3>⚠️ Common Security Pitfalls</h3>
-                    <ul>
-                        <li><strong>Client-only role checks:</strong> Never trust the client alone. Always back it up with Security Rules.</li>
-                        <li><strong>Hardcoded secrets:</strong> API keys live in <code>.env</code> files — never committed to git. The Firebase config is safe to expose (it's public by design), but the Admin SDK key is not.</li>
-                        <li><strong>Stale claims:</strong> Custom claims are cached in the JWT. After updating a role, call <code>user.getIdToken(true)</code> to force a refresh.</li>
-                    </ul>
-                </div>
-
-                <div class="quiz-section">
-                    <div class="quiz-header">
-                        <div class="issue-badge">❓ Knowledge Check</div>
-                        <h2>Security Mastery</h2>
-                    </div>
-                    <div id="quiz-container-2">
-                        <div class="quiz-question" data-answer="1">
-                            <p class="q-text">1. Where are Firebase Custom Claims stored and verified?</p>
-                            <div class="options">
-                                <button class="option-btn" data-index="0">A) In localStorage on the client</button>
-                                <button class="option-btn" data-index="1">B) Inside the user's JWT token, verified server-side</button>
-                                <button class="option-btn" data-index="2">C) In a separate MySQL database</button>
-                                <button class="option-btn" data-index="3">D) In the React component state</button>
-                            </div>
-                        </div>
-                        <div class="quiz-question" data-answer="2">
-                            <p class="q-text">2. Which role can lock a session to prevent further edits?</p>
-                            <div class="options">
-                                <button class="option-btn" data-index="0">A) Viewer</button>
-                                <button class="option-btn" data-index="1">B) Staff</button>
-                                <button class="option-btn" data-index="2">C) Admin</button>
-                                <button class="option-btn" data-index="3">D) Any authenticated user</button>
-                            </div>
-                        </div>
-                        <div class="quiz-question" data-answer="3">
-                            <p class="q-text">3. What must you call after updating a user's custom claim to ensure it takes effect immediately?</p>
-                            <div class="options">
-                                <button class="option-btn" data-index="0">A) firebase.auth().signOut()</button>
-                                <button class="option-btn" data-index="1">B) window.location.reload()</button>
-                                <button class="option-btn" data-index="2">C) updateProfile(user)</button>
-                                <button class="option-btn" data-index="3">D) user.getIdToken(true)</button>
-                            </div>
-                        </div>
-                        <div class="quiz-question" data-answer="0">
-                            <p class="q-text">4. Firebase Security Rules run on the...</p>
-                            <div class="options">
-                                <button class="option-btn" data-index="0">A) Server — they cannot be bypassed by the client</button>
-                                <button class="option-btn" data-index="1">B) Client — they are downloaded and run in the browser</button>
-                                <button class="option-btn" data-index="2">C) Edge — they run in Cloudflare Workers</button>
-                                <button class="option-btn" data-index="3">D) Both client and server equally</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="quiz-score" id="score-2">
-                        <div class="score-num" id="score-num-2">0/4</div>
-                        <h2 id="score-title-2">Keep Studying</h2>
-                        <p id="score-text-2">Re-read the cards above before moving on.</p>
-                    </div>
-                </div>
-            <div class="deep-dive-content"><div class="card">
+                </div><div class="deep-dive-content"><div class="card">
 <p>In a live hotel environment, security is critical. Not everyone should be able to alter guest records or lock sessions. We enforce this through <strong>Firebase Authentication, Custom Claims, and server-side Realtime Database Security Rules</strong>.</p>
 </div>
 <div class="card">
@@ -866,7 +783,90 @@ export const ProtectedRoute: React.FC&lt;ProtectedRouteProps&gt; = ({ children, 
 <p>By layering Custom Claims with strict DB Rules, we guarantee that viewers cannot write, staff cannot modify locked sessions, and unauthorized users are completely blocked.</p>
 
 </div>
-</div></div>
+</div>
+
+                <div class="card">
+                    <h3>🛡️ Firebase Security Rules (Recently Hardened)</h3>
+                    <p>The Realtime Database is locked down by rules that run <em>server-side</em>. Recent security audits introduced several strict enforcements:</p>
+                    <ul>
+                        <li><strong>Strict RBAC &amp; Auth:</strong> All read and write operations explicitly require <code>auth != null</code> AND <code>auth.token.email != null</code> (blocking anonymous auth completely), AND the role must be exactly <code>staff</code> or <code>admin</code>.</li>
+                        <li><strong>Payload Validation:</strong> Every single field (like guest notes, room names, etc.) is strictly validated for type and length (e.g., <code>newData.isString() &amp;&amp; newData.val().length &lt;= 5000</code>) to prevent payload injection or database bloat.</li>
+                        <li><strong>Asymmetric Access:</strong> Nodes like <code>heartbeat</code> are write-only (reads are blocked to prevent scraping), while <code>analytics.snapshots</code> are read-only (prevents client-side tampering).</li>
+                        <li><strong>Default Deny:</strong> A catch-all <code>$other</code> rule explicitly blocks any reads or writes to undefined nodes.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>🛤️ Route Guards</h3>
+                    <p>On the client side, React routes are wrapped in <strong>auth guard components</strong> that check the user's state before rendering:</p>
+                    <div class="flow">
+                        <div class="flow-step">Route Request</div><div class="flow-arrow">➔</div>
+                        <div class="flow-step">Auth Check</div><div class="flow-arrow">➔</div>
+                        <div class="flow-step">Role Check</div><div class="flow-arrow">➔</div>
+                        <div class="flow-step">✅ Render</div>
+                    </div>
+                    <p>If any check fails, the user is redirected to the login screen. This prevents even a quick flash of protected content.</p>
+                </div>
+
+                <div class="card">
+                    <h3>⚠️ Common Security Pitfalls</h3>
+                    <ul>
+                        <li><strong>Client-only role checks:</strong> Never trust the client alone. Always back it up with Security Rules.</li>
+                        <li><strong>Hardcoded secrets:</strong> API keys live in <code>.env</code> files — never committed to git. The Firebase config is safe to expose (it's public by design), but the Admin SDK key is not.</li>
+                        <li><strong>Stale claims:</strong> Custom claims are cached in the JWT. After updating a role, call <code>user.getIdToken(true)</code> to force a refresh.</li>
+                    </ul>
+                </div>
+
+                <div class="quiz-section">
+                    <div class="quiz-header">
+                        <div class="issue-badge">❓ Knowledge Check</div>
+                        <h2>Security Mastery</h2>
+                    </div>
+                    <div id="quiz-container-2">
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">1. Where are Firebase Custom Claims stored and verified?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) In localStorage on the client</button>
+                                <button class="option-btn" data-index="1">B) Inside the user's JWT token, verified server-side</button>
+                                <button class="option-btn" data-index="2">C) In a separate MySQL database</button>
+                                <button class="option-btn" data-index="3">D) In the React component state</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">2. Which role can lock a session to prevent further edits?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Viewer</button>
+                                <button class="option-btn" data-index="1">B) Staff</button>
+                                <button class="option-btn" data-index="2">C) Admin</button>
+                                <button class="option-btn" data-index="3">D) Any authenticated user</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="3">
+                            <p class="q-text">3. What must you call after updating a user's custom claim to ensure it takes effect immediately?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) firebase.auth().signOut()</button>
+                                <button class="option-btn" data-index="1">B) window.location.reload()</button>
+                                <button class="option-btn" data-index="2">C) updateProfile(user)</button>
+                                <button class="option-btn" data-index="3">D) user.getIdToken(true)</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="0">
+                            <p class="q-text">4. Firebase Security Rules run on the...</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Server — they cannot be bypassed by the client</button>
+                                <button class="option-btn" data-index="1">B) Client — they are downloaded and run in the browser</button>
+                                <button class="option-btn" data-index="2">C) Edge — they run in Cloudflare Workers</button>
+                                <button class="option-btn" data-index="3">D) Both client and server equally</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quiz-score" id="score-2">
+                        <div class="score-num" id="score-num-2">0/4</div>
+                        <h2 id="score-title-2">Keep Studying</h2>
+                        <p id="score-text-2">Re-read the cards above before moving on.</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- 📘 LESSON 3 -->
@@ -896,7 +896,108 @@ export const ProtectedRoute: React.FC&lt;ProtectedRouteProps&gt; = ({ children, 
                         <li><strong>Structural Synthesis:</strong> The raw strings are mapped into a <code>GuestData</code> model, identifying room numbers, names, and statuses.</li>
                     </ol>
                     <p>💡 Unlike simple text scrapers, our parser understands the <em>visual layout</em> of the page — not just the words on it.</p>
-                </div>
+                </div><div class="deep-dive-content"><div class="card">
+<p>Parsing messy PMS exports requires more than simple text extraction. The Gilpin Arrivals Tool utilizes <code>pdfjs-dist</code> to perform <strong>Coordinate-Based Parsing</strong>, reading text relative to its X/Y position on the page.</p>
+</div>
+<div class="card">
+<h3>💻 1. Extracting Text with Positional Data</h3>
+<p>Using <code>pdfjs-dist</code>, we extract not only the text content but the transform matrix, allowing us to map the X and Y coordinates.</p>
+<pre><code class="language-typescript">// src/services/pdfService.ts
+import * as pdfjsLib from 'pdfjs-dist';
+
+export interface TextItemWithCoords {
+  str: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export const extractTextWithCoordinates = async (pdfFile: File): Promise&lt;TextItemWithCoords[]&gt; =&gt; {
+  const arrayBuffer = await pdfFile.arrayBuffer();
+  const pdfDocument = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const items: TextItemWithCoords[] = [];
+
+  for (let pageNum = 1; pageNum &lt;= pdfDocument.numPages; pageNum++) {
+    const page = await pdfDocument.getPage(pageNum);
+    const textContent = await page.getTextContent();
+
+    textContent.items.forEach((item: any) =&gt; {
+      // The transform array contains positioning info: [scaleX, skewY, skewX, scaleY, translateX, translateY]
+      const transform = item.transform;
+      items.push({
+        str: item.str,
+        x: transform[4],
+        y: transform[5],
+        width: item.width,
+        height: item.height
+      });
+    });
+  }
+
+  return items;
+};
+</code></pre>
+
+</div>
+<div class="card">
+<h3>💻 2. Horizontal Alignment and Grouping (Y-Axis Matching)</h3>
+<p>Once we have the coordinates, we group elements that share roughly the same Y coordinate (representing a single row/guest). </p>
+<pre><code class="language-typescript">// src/services/parserUtils.ts
+import { TextItemWithCoords } from './pdfService';
+
+const Y_TOLERANCE = 3.0; // Margin of error for row alignment
+
+export const groupIntoRows = (items: TextItemWithCoords[]): TextItemWithCoords[][] =&gt; {
+  const rows: TextItemWithCoords[][] = [];
+
+  // Sort top-to-bottom
+  items.sort((a, b) =&gt; b.y - a.y);
+
+  let currentRow: TextItemWithCoords[] = [];
+  let currentY = items[0]?.y;
+
+  items.forEach(item =&gt; {
+    // If the Y coordinate is within our tolerance, it belongs to the same row
+    if (Math.abs(item.y - currentY) &lt;= Y_TOLERANCE) {
+      currentRow.push(item);
+    } else {
+      // New row started
+      rows.push([...currentRow].sort((a, b) =&gt; a.x - b.x)); // Sort left-to-right within the row
+      currentRow = [item];
+      currentY = item.y;
+    }
+  });
+
+  if (currentRow.length &gt; 0) rows.push(currentRow);
+  return rows;
+};
+</code></pre>
+
+</div>
+<div class="card">
+<h3>💻 3. Regex Pattern Matchers</h3>
+<p>Even with grouping, we need to extract specific data shapes using Regular Expressions. </p>
+<pre><code class="language-typescript">// src/services/regexPatterns.ts
+
+// Match date formats like 14/03/2026 or 14/03/26
+export const DATE_REGEX = /(\d{2}\/\d{2}\/\d{2,4})/g;
+
+// Extract a room number, usually alphanumeric and 2-4 characters long
+export const ROOM_REGEX = /^(RM-\d{2,3}|[1-9]\d{1,2}|Lake-\d)$/i;
+
+// Parse the extracted text line
+export const extractArrivalData = (rawText: string) =&gt; {
+  const dates = rawText.match(DATE_REGEX);
+  const arrivalDate = dates ? dates[0] : null;
+
+  return { arrivalDate };
+};
+</code></pre>
+<p>By combining X/Y grouping and Regex extraction, the Gilpin parser remains incredibly resilient against minor column shifts or varying page margins.</p>
+
+</div>
+</div>
 
                 <div class="card">
                     <h3>📍 Coordinate-Based Parsing</h3>
@@ -1008,108 +1109,7 @@ export const ProtectedRoute: React.FC&lt;ProtectedRouteProps&gt; = ({ children, 
                         <p id="score-text-3">Re-read the cards above before moving on.</p>
                     </div>
                 </div>
-            <div class="deep-dive-content"><div class="card">
-<p>Parsing messy PMS exports requires more than simple text extraction. The Gilpin Arrivals Tool utilizes <code>pdfjs-dist</code> to perform <strong>Coordinate-Based Parsing</strong>, reading text relative to its X/Y position on the page.</p>
-</div>
-<div class="card">
-<h3>💻 1. Extracting Text with Positional Data</h3>
-<p>Using <code>pdfjs-dist</code>, we extract not only the text content but the transform matrix, allowing us to map the X and Y coordinates.</p>
-<pre><code class="language-typescript">// src/services/pdfService.ts
-import * as pdfjsLib from 'pdfjs-dist';
-
-export interface TextItemWithCoords {
-  str: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-export const extractTextWithCoordinates = async (pdfFile: File): Promise&lt;TextItemWithCoords[]&gt; =&gt; {
-  const arrayBuffer = await pdfFile.arrayBuffer();
-  const pdfDocument = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  const items: TextItemWithCoords[] = [];
-
-  for (let pageNum = 1; pageNum &lt;= pdfDocument.numPages; pageNum++) {
-    const page = await pdfDocument.getPage(pageNum);
-    const textContent = await page.getTextContent();
-
-    textContent.items.forEach((item: any) =&gt; {
-      // The transform array contains positioning info: [scaleX, skewY, skewX, scaleY, translateX, translateY]
-      const transform = item.transform;
-      items.push({
-        str: item.str,
-        x: transform[4],
-        y: transform[5],
-        width: item.width,
-        height: item.height
-      });
-    });
-  }
-
-  return items;
-};
-</code></pre>
-
-</div>
-<div class="card">
-<h3>💻 2. Horizontal Alignment and Grouping (Y-Axis Matching)</h3>
-<p>Once we have the coordinates, we group elements that share roughly the same Y coordinate (representing a single row/guest). </p>
-<pre><code class="language-typescript">// src/services/parserUtils.ts
-import { TextItemWithCoords } from './pdfService';
-
-const Y_TOLERANCE = 3.0; // Margin of error for row alignment
-
-export const groupIntoRows = (items: TextItemWithCoords[]): TextItemWithCoords[][] =&gt; {
-  const rows: TextItemWithCoords[][] = [];
-
-  // Sort top-to-bottom
-  items.sort((a, b) =&gt; b.y - a.y);
-
-  let currentRow: TextItemWithCoords[] = [];
-  let currentY = items[0]?.y;
-
-  items.forEach(item =&gt; {
-    // If the Y coordinate is within our tolerance, it belongs to the same row
-    if (Math.abs(item.y - currentY) &lt;= Y_TOLERANCE) {
-      currentRow.push(item);
-    } else {
-      // New row started
-      rows.push([...currentRow].sort((a, b) =&gt; a.x - b.x)); // Sort left-to-right within the row
-      currentRow = [item];
-      currentY = item.y;
-    }
-  });
-
-  if (currentRow.length &gt; 0) rows.push(currentRow);
-  return rows;
-};
-</code></pre>
-
-</div>
-<div class="card">
-<h3>💻 3. Regex Pattern Matchers</h3>
-<p>Even with grouping, we need to extract specific data shapes using Regular Expressions. </p>
-<pre><code class="language-typescript">// src/services/regexPatterns.ts
-
-// Match date formats like 14/03/2026 or 14/03/26
-export const DATE_REGEX = /(\d{2}\/\d{2}\/\d{2,4})/g;
-
-// Extract a room number, usually alphanumeric and 2-4 characters long
-export const ROOM_REGEX = /^(RM-\d{2,3}|[1-9]\d{1,2}|Lake-\d)$/i;
-
-// Parse the extracted text line
-export const extractArrivalData = (rawText: string) =&gt; {
-  const dates = rawText.match(DATE_REGEX);
-  const arrivalDate = dates ? dates[0] : null;
-
-  return { arrivalDate };
-};
-</code></pre>
-<p>By combining X/Y grouping and Regex extraction, the Gilpin parser remains incredibly resilient against minor column shifts or varying page margins.</p>
-
-</div>
-</div></div>
+            </div>
         </div>
 
         <!-- 📘 LESSON 4 -->
@@ -1138,7 +1138,100 @@ export const extractArrivalData = (rawText: string) =&gt; {
                         <li><strong>WebSockets:</strong> A persistent connection stays open between the browser and Firebase.</li>
                         <li><strong>Latency:</strong> Updates typically propagate to all connected staff in <mark>&lt;200ms</mark>.</li>
                     </ul>
-                </div>
+                </div><div class="deep-dive-content"><div class="card">
+<p>The power of the Gilpin Arrivals Tool is its real-time synchronicity. When the reception updates a guest, the change reflects on all screens under 200ms using Firebase WebSockets.</p>
+</div>
+<div class="card">
+<h3>💻 1. Data Synchronization (Sync vs Fetch)</h3>
+<p>We do not use <code>fetch</code> or polling. We set up an active listener using <code>onValue</code> in React.</p>
+<pre><code class="language-typescript">// src/hooks/useSessionData.ts
+import { useEffect, useState } from 'react';
+import { ref, onValue, off } from 'firebase/database';
+import { db } from '../services/firebaseConfig';
+import { ArrivalSession } from '../types/GuestData';
+
+export const useSessionData = (sessionId: string) =&gt; {
+  const [session, setSession] = useState&lt;ArrivalSession | null&gt;(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() =&gt; {
+    const sessionRef = ref(db, `sessions/${sessionId}`);
+    
+    // Subscribe to real-time updates
+    const unsubscribe = onValue(sessionRef, (snapshot) =&gt; {
+      if (snapshot.exists()) {
+        setSession(snapshot.val());
+      } else {
+        setSession(null);
+      }
+      setLoading(false);
+    });
+
+    // Cleanup the listener on unmount
+    return () =&gt; {
+      unsubscribe();
+    };
+  }, [sessionId]);
+
+  return { session, loading };
+};
+</code></pre>
+
+</div>
+<div class="card">
+<h3>💻 2. Presence Tracking: Who is Online?</h3>
+<p>To know which staff members are looking at a dashboard, we use <code>onDisconnect</code> to handle abrupt disconnections (tab close, crash, internet drop).</p>
+<pre><code class="language-typescript">// src/services/presenceService.ts
+import { ref, onDisconnect, set, remove, serverTimestamp } from 'firebase/database';
+import { db, auth } from './firebaseConfig';
+
+export const trackPresence = (sessionId: string, department: string) =&gt; {
+  const uid = auth.currentUser?.uid;
+  if (!uid) return;
+
+  const userPresenceRef = ref(db, `presence/${sessionId}/${uid}`);
+
+  // Set up the disconnection hook BEFORE writing the presence
+  // If the client disconnects, Firebase automatically removes this node
+  onDisconnect(userPresenceRef).remove().then(() =&gt; {
+    // Write the presence state
+    set(userPresenceRef, {
+      department,
+      onlineSince: serverTimestamp(),
+    });
+  });
+
+  return () =&gt; {
+    // Manual cleanup when the user leaves the route normally
+    remove(userPresenceRef);
+    onDisconnect(userPresenceRef).cancel(); // Cancel the disconnect hook
+  };
+};
+</code></pre>
+
+</div>
+<div class="card">
+<h3>💻 3. Optimistic Updates</h3>
+<p>Firebase handles local caching natively. If you write data while offline, Firebase caches it and syncs when reconnected.</p>
+<pre><code class="language-typescript">// src/services/guestService.ts
+import { ref, update } from 'firebase/database';
+import { db } from './firebaseConfig';
+
+export const updateGuestNote = async (sessionId: string, guestId: string, newNote: string) =&gt; {
+  const guestRef = ref(db, `sessions/${sessionId}/guests/${guestId}`);
+  
+  // This resolves instantly in the UI thanks to local caching, 
+  // syncing in the background automatically
+  await update(guestRef, {
+    notes: newNote,
+    lastUpdated: Date.now()
+  });
+};
+</code></pre>
+<p>This ensures the hotel staff never experience UI freezes, even on spotty hotel Wi-Fi.</p>
+
+</div>
+</div>
 
                 <div class="card">
                     <h3>📂 The Data Tree</h3>
@@ -1243,100 +1336,7 @@ export const extractArrivalData = (rawText: string) =&gt; {
                         <p id="score-text-4">Re-read the cards above before moving on.</p>
                     </div>
                 </div>
-            <div class="deep-dive-content"><div class="card">
-<p>The power of the Gilpin Arrivals Tool is its real-time synchronicity. When the reception updates a guest, the change reflects on all screens under 200ms using Firebase WebSockets.</p>
-</div>
-<div class="card">
-<h3>💻 1. Data Synchronization (Sync vs Fetch)</h3>
-<p>We do not use <code>fetch</code> or polling. We set up an active listener using <code>onValue</code> in React.</p>
-<pre><code class="language-typescript">// src/hooks/useSessionData.ts
-import { useEffect, useState } from 'react';
-import { ref, onValue, off } from 'firebase/database';
-import { db } from '../services/firebaseConfig';
-import { ArrivalSession } from '../types/GuestData';
-
-export const useSessionData = (sessionId: string) =&gt; {
-  const [session, setSession] = useState&lt;ArrivalSession | null&gt;(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() =&gt; {
-    const sessionRef = ref(db, `sessions/${sessionId}`);
-    
-    // Subscribe to real-time updates
-    const unsubscribe = onValue(sessionRef, (snapshot) =&gt; {
-      if (snapshot.exists()) {
-        setSession(snapshot.val());
-      } else {
-        setSession(null);
-      }
-      setLoading(false);
-    });
-
-    // Cleanup the listener on unmount
-    return () =&gt; {
-      unsubscribe();
-    };
-  }, [sessionId]);
-
-  return { session, loading };
-};
-</code></pre>
-
-</div>
-<div class="card">
-<h3>💻 2. Presence Tracking: Who is Online?</h3>
-<p>To know which staff members are looking at a dashboard, we use <code>onDisconnect</code> to handle abrupt disconnections (tab close, crash, internet drop).</p>
-<pre><code class="language-typescript">// src/services/presenceService.ts
-import { ref, onDisconnect, set, remove, serverTimestamp } from 'firebase/database';
-import { db, auth } from './firebaseConfig';
-
-export const trackPresence = (sessionId: string, department: string) =&gt; {
-  const uid = auth.currentUser?.uid;
-  if (!uid) return;
-
-  const userPresenceRef = ref(db, `presence/${sessionId}/${uid}`);
-
-  // Set up the disconnection hook BEFORE writing the presence
-  // If the client disconnects, Firebase automatically removes this node
-  onDisconnect(userPresenceRef).remove().then(() =&gt; {
-    // Write the presence state
-    set(userPresenceRef, {
-      department,
-      onlineSince: serverTimestamp(),
-    });
-  });
-
-  return () =&gt; {
-    // Manual cleanup when the user leaves the route normally
-    remove(userPresenceRef);
-    onDisconnect(userPresenceRef).cancel(); // Cancel the disconnect hook
-  };
-};
-</code></pre>
-
-</div>
-<div class="card">
-<h3>💻 3. Optimistic Updates</h3>
-<p>Firebase handles local caching natively. If you write data while offline, Firebase caches it and syncs when reconnected.</p>
-<pre><code class="language-typescript">// src/services/guestService.ts
-import { ref, update } from 'firebase/database';
-import { db } from './firebaseConfig';
-
-export const updateGuestNote = async (sessionId: string, guestId: string, newNote: string) =&gt; {
-  const guestRef = ref(db, `sessions/${sessionId}/guests/${guestId}`);
-  
-  // This resolves instantly in the UI thanks to local caching, 
-  // syncing in the background automatically
-  await update(guestRef, {
-    notes: newNote,
-    lastUpdated: Date.now()
-  });
-};
-</code></pre>
-<p>This ensures the hotel staff never experience UI freezes, even on spotty hotel Wi-Fi.</p>
-
-</div>
-</div></div>
+            </div>
         </div>
 
         <!-- ✨ LESSON 5 -->
@@ -1365,88 +1365,7 @@ export const updateGuestNote = async (sessionId: string, guestId: string, newNot
                         <li><strong>Sentiment Analysis:</strong> Analyzing guest notes to flag specific preferences or potential issues before arrival.</li>
                         <li><strong>Anomaly Detection:</strong> Flagging unusual booking patterns or data mismatches (e.g., room numbers that don't exist).</li>
                     </ul>
-                </div>
-
-                <div class="card">
-                    <h3>🤖 Gemini Integration</h3>
-                    <p>The tool leverages <strong>Google's Gemini models</strong> to process complex natural language data from the PDF exports.</p>
-                    <div class="stack-grid">
-                        <div class="stack-item"><span class="stack-icon">🧠</span><span class="stack-name">Gemini 1.5 Flash</span><span class="stack-role">Audit Engine</span></div>
-                        <div class="stack-item"><span class="stack-icon">⚡</span><span class="stack-name">Firebase Functions</span><span class="stack-role">Execution</span></div>
-                        <div class="stack-item"><span class="stack-icon">🛡️</span><span class="stack-name">Security Guards</span><span class="stack-role">Data Privacy</span></div>
-                    </div>
-                    <p>Gemini is used for <strong>summarizing morning briefings</strong> and generating the <strong>AI Audit reports</strong> that help managers optimize the hotel's performance.</p>
-                </div>
-
-                <div class="card">
-                    <h3>📊 Data Pipeline &amp; UI Polish</h3>
-                    <p>Recent updates have focused on the "Production Readiness" of these AI features:</p>
-                    <ul>
-                        <li><strong>Optimized Loading:</strong> Real-time streaming of AI insights ensures no UI blocking.</li>
-                        <li><strong>Secure Routing:</strong> AI audit results are protected by the same strict RBAC as the core guest data.</li>
-                        <li><strong>Visual Feedback:</strong> New animations and status indicators show exactly when the AI is "thinking" or "auditing".</li>
-                    </ul>
-                </div>
-
-                <div class="quiz-section">
-                    <div class="quiz-header">
-                        <div class="issue-badge">✅ Knowledge Check</div>
-                        <h2>AI &amp; Intelligence Mastery</h2>
-                    </div>
-                    <div id="quiz-container-5">
-                        <div class="quiz-question" data-answer="2">
-                            <p class="q-text">1. What is the primary role of the AI Audit system?</p>
-                            <div class="options">
-                                <button class="option-btn" data-index="0">A) To replace receptionists</button>
-                                <button class="option-btn" data-index="1">B) To book guests automatically</button>
-                                <button class="option-btn" data-index="2">C) To scan records for inconsistencies and operational insights</button>
-                                <button class="option-btn" data-index="3">D) To manage the hotel's social media</button>
-                            </div>
-                        </div>
-                        <div class="quiz-question" data-answer="1">
-                            <p class="q-text">2. Which AI model is primarily used for the audit engine?</p>
-                            <div class="options">
-                                <button class="option-btn" data-index="0">A) GPT-3.5</button>
-                                <button class="option-btn" data-index="1">B) Gemini 1.5 Flash</button>
-                                <button class="option-btn" data-index="2">C) Claude 2.1</button>
-                                <button class="option-btn" data-index="3">D) Llama 3</button>
-                            </div>
-                        </div>
-                        <div class="quiz-question" data-answer="0">
-                            <p class="q-text">3. How is AI processing feedback shown to the user?</p>
-                            <div class="options">
-                                <button class="option-btn" data-index="0">A) Via animations and status indicators</button>
-                                <button class="option-btn" data-index="1">B) Through automated emails</button>
-                                <button class="option-btn" data-index="2">C) It isn't shown at all</button>
-                                <button class="option-btn" data-index="3">D) Using browser alert popups</button>
-                            </div>
-                        </div>
-                        <div class="quiz-question" data-answer="3">
-                            <p class="q-text">4. What ensures that AI audit results are only visible to authorized staff?</p>
-                            <div class="options">
-                                <button class="option-btn" data-index="0">A) Password-protected PDFs</button>
-                                <button class="option-btn" data-index="1">B) Physical locks on servers</button>
-                                <button class="option-btn" data-index="2">C) Client-side JavaScript hiding</button>
-                                <button class="option-btn" data-index="3">D) Strict Role-Based Access Control (RBAC)</button>
-                            </div>
-                        </div>
-                        <div class="quiz-question" data-answer="2">
-                            <p class="q-text">5. What is "Sentiment Analysis" used for in this tool?</p>
-                            <div class="options">
-                                <button class="option-btn" data-index="0">A) Predicting the weather</button>
-                                <button class="option-btn" data-index="1">B) Calculating room prices</button>
-                                <button class="option-btn" data-index="2">C) Flagging guest preferences or potential issues from notes</button>
-                                <button class="option-btn" data-index="3">D) Monitoring staff morale</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="quiz-score" id="score-5">
-                        <div class="score-num" id="score-num-5">0/5</div>
-                        <h2 id="score-title-5">Keep Studying</h2>
-                        <p id="score-text-5">Re-read the cards above before moving on.</p>
-                    </div>
-                </div>
-            <div class="deep-dive-content"><div class="card">
+                </div><div class="deep-dive-content"><div class="card">
 <p>Integrating AI into an enterprise tool requires balancing reasoning capabilities with strict data privacy constraints. We utilize <strong>Gemini 1.5 Flash / 3 Pro</strong> but enforce an anonymization boundary before data ever hits the API.</p>
 </div>
 <div class="card">
@@ -1548,7 +1467,88 @@ export const fetchAIAuditWithRetry = async (payload: any, retries = 3, delay = 1
 <p>This strict architectural separation guarantees that intelligence enhancements never compromise data security or user experience stability.</p>
 
 </div>
-</div></div>
+</div>
+
+                <div class="card">
+                    <h3>🤖 Gemini Integration</h3>
+                    <p>The tool leverages <strong>Google's Gemini models</strong> to process complex natural language data from the PDF exports.</p>
+                    <div class="stack-grid">
+                        <div class="stack-item"><span class="stack-icon">🧠</span><span class="stack-name">Gemini 1.5 Flash</span><span class="stack-role">Audit Engine</span></div>
+                        <div class="stack-item"><span class="stack-icon">⚡</span><span class="stack-name">Firebase Functions</span><span class="stack-role">Execution</span></div>
+                        <div class="stack-item"><span class="stack-icon">🛡️</span><span class="stack-name">Security Guards</span><span class="stack-role">Data Privacy</span></div>
+                    </div>
+                    <p>Gemini is used for <strong>summarizing morning briefings</strong> and generating the <strong>AI Audit reports</strong> that help managers optimize the hotel's performance.</p>
+                </div>
+
+                <div class="card">
+                    <h3>📊 Data Pipeline &amp; UI Polish</h3>
+                    <p>Recent updates have focused on the "Production Readiness" of these AI features:</p>
+                    <ul>
+                        <li><strong>Optimized Loading:</strong> Real-time streaming of AI insights ensures no UI blocking.</li>
+                        <li><strong>Secure Routing:</strong> AI audit results are protected by the same strict RBAC as the core guest data.</li>
+                        <li><strong>Visual Feedback:</strong> New animations and status indicators show exactly when the AI is "thinking" or "auditing".</li>
+                    </ul>
+                </div>
+
+                <div class="quiz-section">
+                    <div class="quiz-header">
+                        <div class="issue-badge">✅ Knowledge Check</div>
+                        <h2>AI &amp; Intelligence Mastery</h2>
+                    </div>
+                    <div id="quiz-container-5">
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">1. What is the primary role of the AI Audit system?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) To replace receptionists</button>
+                                <button class="option-btn" data-index="1">B) To book guests automatically</button>
+                                <button class="option-btn" data-index="2">C) To scan records for inconsistencies and operational insights</button>
+                                <button class="option-btn" data-index="3">D) To manage the hotel's social media</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">2. Which AI model is primarily used for the audit engine?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) GPT-3.5</button>
+                                <button class="option-btn" data-index="1">B) Gemini 1.5 Flash</button>
+                                <button class="option-btn" data-index="2">C) Claude 2.1</button>
+                                <button class="option-btn" data-index="3">D) Llama 3</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="0">
+                            <p class="q-text">3. How is AI processing feedback shown to the user?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Via animations and status indicators</button>
+                                <button class="option-btn" data-index="1">B) Through automated emails</button>
+                                <button class="option-btn" data-index="2">C) It isn't shown at all</button>
+                                <button class="option-btn" data-index="3">D) Using browser alert popups</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="3">
+                            <p class="q-text">4. What ensures that AI audit results are only visible to authorized staff?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Password-protected PDFs</button>
+                                <button class="option-btn" data-index="1">B) Physical locks on servers</button>
+                                <button class="option-btn" data-index="2">C) Client-side JavaScript hiding</button>
+                                <button class="option-btn" data-index="3">D) Strict Role-Based Access Control (RBAC)</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">5. What is "Sentiment Analysis" used for in this tool?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Predicting the weather</button>
+                                <button class="option-btn" data-index="1">B) Calculating room prices</button>
+                                <button class="option-btn" data-index="2">C) Flagging guest preferences or potential issues from notes</button>
+                                <button class="option-btn" data-index="3">D) Monitoring staff morale</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quiz-score" id="score-5">
+                        <div class="score-num" id="score-num-5">0/5</div>
+                        <h2 id="score-title-5">Keep Studying</h2>
+                        <p id="score-text-5">Re-read the cards above before moving on.</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- 🖥️ LESSON 6 -->

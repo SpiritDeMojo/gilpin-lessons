@@ -1,0 +1,2095 @@
+<!DOCTYPE html><html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Gilpin Gazette — Developer Edition</title>
+    <meta name="description" content="Developer lessons for the Gilpin Arrivals Tool">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,600;0,800;1,400&amp;display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --gold: #c5a065;
+            --gold-hover: #b59456;
+            --gold-dim: rgba(197, 160, 101, 0.12);
+            --gold-glow: rgba(197, 160, 101, 0.25);
+            --bg-dark: #0a0a0a;
+            --bg-card: #141414;
+            --bg-sidebar: #0f0f0f;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #27272a;
+            --sidebar-width: 280px;
+            --transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        body.light-mode {
+            --bg-dark: #f5f5f0;
+            --bg-card: #ffffff;
+            --bg-sidebar: #eeede8;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #dde1e7;
+            --gold-dim: rgba(197,160,101,0.15);
+            --gold-glow: rgba(197,160,101,0.2);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.75;
+            font-size: 17px;
+            overflow-x: hidden;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* 📋 PROGRESS */
+        .progress-container {
+            position: fixed; top: 0;
+            left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            height: 3px; z-index: 300;
+            transition: left var(--transition), width var(--transition);
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--gold), #e8c98a);
+            width: 0%; border-radius: 0 2px 2px 0;
+            box-shadow: 0 0 12px var(--gold-glow);
+            transition: width 0.1s linear;
+        }
+
+        /* 🌑 OVERLAY */
+        .overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(2px);
+            z-index: 99; opacity: 0; transition: opacity 0.3s;
+        }
+        body.sidebar-open .overlay { display: block; opacity: 1; }
+
+        /* 📑 SIDEBAR */
+        .sidebar {
+            position: fixed; top: 0; left: 0;
+            width: var(--sidebar-width); height: 100vh;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            padding: 28px 18px;
+            display: flex; flex-direction: column; gap: 8px;
+            transition: transform var(--transition);
+            z-index: 100; overflow-y: auto;
+        }
+        body.focus-mode .sidebar { transform: translateX(-100%); }
+
+        .brand {
+            font-weight: 800; font-size: 1.1rem;
+            color: var(--gold); margin-bottom: 16px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .brand-sub {
+            display: block; font-size: 0.72rem; font-weight: 400;
+            color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase;
+        }
+
+        .lesson-nav {
+            padding: 13px 14px; border-radius: 12px;
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; gap: 11px;
+            font-weight: 600; font-size: 0.88rem;
+            color: var(--text-main); user-select: none;
+        }
+        .lesson-nav.active {
+            border-color: var(--gold); background: var(--gold-dim);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        .lesson-nav.locked { opacity: 0.45; cursor: not-allowed; background: transparent; }
+        .lesson-nav:not(.locked):hover { transform: translateX(3px); border-color: var(--gold); }
+        .nav-label { flex: 1; }
+        .locked-date { display: block; font-size: 0.72rem; font-weight: 400; color: var(--text-muted); margin-top: 3px; }
+        .nav-check { color: var(--gold); font-size: 0.9rem; }
+        .sidebar-divider { height: 1px; background: var(--border-color); margin: 4px 0; }
+
+        /* 🏷️ TOPBAR */
+        .topbar {
+            position: sticky; top: 3px; z-index: 90;
+            padding: 12px 40px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: linear-gradient(to bottom, var(--bg-dark) 55%, transparent);
+        }
+        .topbar-left { display: flex; align-items: center; gap: 10px; }
+        .topbar-right { display: flex; align-items: center; gap: 10px; }
+        .hamburger {
+            display: none; background: var(--bg-card);
+            border: 1px solid var(--border-color); color: var(--text-main);
+            border-radius: 8px; padding: 8px 12px; cursor: pointer;
+            font-size: 1.1rem; transition: all 0.2s; line-height: 1;
+        }
+        .hamburger:hover { border-color: var(--gold); color: var(--gold); }
+        .reading-time { font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+        .btn {
+            background: var(--bg-card); color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px; border-radius: 8px; cursor: pointer;
+            font-family: inherit; font-weight: 600; font-size: 0.88rem;
+            transition: all 0.2s; display: flex; align-items: center; gap: 7px; white-space: nowrap;
+        }
+        .btn:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
+        .btn.active-btn { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); }
+
+        /* 🏰 MAIN */
+        .main-wrapper {
+            margin-left: var(--sidebar-width); min-height: 100vh;
+            transition: margin-left var(--transition);
+        }
+        body.focus-mode .main-wrapper { margin-left: 0; }
+        body.focus-mode .progress-container { left: 0; width: 100%; }
+
+        /* 📖 LESSON VIEWS */
+        .lesson-view { display: none; }
+        .lesson-view.active-view { display: block; }
+
+        .content {
+            max-width: 780px; margin: 0 auto;
+            padding: 20px 40px 120px;
+        }
+        .content > * { animation: fadeUp 0.45s ease both; }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 🏷️ TITLE BLOCK */
+        .title-block { text-align: center; margin-bottom: 52px; padding-top: 10px; }
+        .issue-badge {
+            display: inline-flex; align-items: center; gap: 7px;
+            background: var(--gold-dim); border: 1px solid var(--gold); color: var(--gold);
+            font-size: 0.78rem; font-weight: 700; letter-spacing: 1.2px;
+            text-transform: uppercase; padding: 5px 14px; border-radius: 99px; margin-bottom: 18px;
+        }
+        .title-block h1 {
+            font-size: clamp(1.8rem, 4vw, 2.5rem); font-weight: 800;
+            line-height: 1.2; letter-spacing: -0.5px; margin-bottom: 14px;
+        }
+        .title-meta {
+            display: flex; align-items: center; justify-content: center;
+            gap: 16px; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap;
+        }
+        .title-meta span { display: flex; align-items: center; gap: 5px; }
+
+        /* 💬 QUOTE */
+        .quote {
+            border-left: 3px solid var(--gold); background: var(--gold-dim);
+            padding: 20px 28px; border-radius: 0 14px 14px 0;
+            font-style: italic; color: var(--gold); font-size: 1.05rem; margin: 0 0 40px;
+        }
+        .quote cite { display: block; font-style: normal; font-size: 0.8rem; color: var(--text-muted); margin-top: 10px; font-weight: 600; }
+
+        /* 🃏 CARDS */
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 18px; padding: 28px 30px; margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            transition: transform 0.25s, border-color 0.25s, box-shadow 0.25s;
+        }
+        .card:hover { border-color: rgba(197,160,101,0.35); transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.15); }
+        .card h3 {
+            color: var(--gold); font-size: 1.2rem; font-weight: 800;
+            display: flex; align-items: center; gap: 11px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 13px; margin-bottom: 18px;
+        }
+        p { margin-bottom: 1.3rem; color: var(--text-muted); }
+        p:last-child { margin-bottom: 0; }
+        strong { color: var(--text-main); font-weight: 600; }
+        mark { background: var(--gold-dim); padding: 2px 7px; border-radius: 5px; color: var(--gold); font-weight: 600; }
+        ul, ol { color: var(--text-muted); padding-left: 22px; margin-bottom: 1.3rem; }
+        li { margin-bottom: 9px; }
+        li strong { color: var(--text-main); }
+        code {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);
+            padding: 2px 7px; border-radius: 5px; font-size: 0.87em;
+            font-family: 'Fira Code', 'Courier New', monospace; color: #e2b96a;
+        }
+        body.light-mode code { background: rgba(0,0,0,0.05); color: #9a6b1e; }
+
+        /* 📊 TABLES */
+        .table-wrap { overflow-x: auto; margin-bottom: 1.3rem; border-radius: 10px; border: 1px solid var(--border-color); }
+        table { width: 100%; border-collapse: collapse; background: var(--bg-dark); }
+        th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 0.93rem; }
+        tr:last-child td { border-bottom: none; }
+        th { background: var(--gold-dim); color: var(--gold); font-weight: 700; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* 🏷️ STACK BADGE */
+        .stack-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-bottom: 1.3rem; }
+        .stack-item {
+            background: var(--bg-dark); border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 12px 14px; text-align: center;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+        .stack-item:hover { border-color: var(--gold); transform: translateY(-2px); }
+        .stack-item .stack-icon { font-size: 1.5rem; display: block; margin-bottom: 5px; }
+        .stack-item .stack-name { font-size: 0.82rem; font-weight: 700; color: var(--text-main); display: block; }
+        .stack-item .stack-role { font-size: 0.72rem; color: var(--text-muted); display: block; }
+
+        /* 🗺️ FLOW DIAGRAM */
+        .flow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 1.3rem; }
+        .flow-step {
+            background: var(--gold-dim); border: 1px solid var(--gold);
+            color: var(--gold); padding: 7px 14px; border-radius: 8px;
+            font-size: 0.82rem; font-weight: 700; white-space: nowrap;
+        }
+        .flow-arrow { color: var(--text-muted); font-size: 1rem; }
+
+        /* 🧠 QUIZ */
+        .quiz-section { margin-top: 60px; border-top: 1px solid var(--border-color); padding-top: 44px; }
+        .quiz-header { text-align: center; margin-bottom: 28px; }
+        .quiz-header h2 { font-size: 1.5rem; font-weight: 800; }
+        .quiz-question {
+            margin-bottom: 20px; background: var(--bg-card);
+            border: 1px solid var(--border-color); border-radius: 16px; padding: 26px 28px;
+        }
+        .quiz-question .q-text { color: var(--text-main); font-weight: 700; font-size: 0.98rem; margin-bottom: 14px; }
+        .options { display: flex; flex-direction: column; gap: 8px; }
+        .option-btn {
+            background: var(--bg-dark); border: 1px solid var(--border-color);
+            color: var(--text-muted); padding: 13px 16px; border-radius: 10px;
+            text-align: left; cursor: pointer; font-size: 0.93rem; font-family: inherit;
+            transition: all 0.2s; display: flex; justify-content: space-between; align-items: center; gap: 12px;
+        }
+        .option-btn:hover:not(.disabled) { background: var(--gold-dim); border-color: var(--gold); color: var(--text-main); transform: translateX(3px); }
+        .option-btn.correct { background: rgba(34,197,94,0.1); border-color: #22c55e; color: #22c55e; }
+        .option-btn.wrong   { background: rgba(239,68,68,0.1);  border-color: #ef4444; color: #ef4444; }
+        .option-btn.disabled { cursor: default; }
+        .quiz-score {
+            display: none; text-align: center; padding: 34px;
+            background: var(--gold-dim); border-radius: 18px; border: 1px solid var(--gold);
+            margin-top: 24px; animation: bounceIn 0.55s cubic-bezier(0.175,0.885,0.32,1.275);
+        }
+        .quiz-score .score-num { font-size: 2.8rem; font-weight: 800; color: var(--gold); line-height: 1; margin-bottom: 8px; }
+        .quiz-score h2 { font-size: 1.25rem; color: var(--text-main); margin-bottom: 6px; }
+        .quiz-score p { color: var(--text-muted); margin: 0; font-size: 0.93rem; }
+        @keyframes bounceIn { 0% { transform: scale(0.75); opacity: 0; } 70% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
+
+        /* 🔒 LOCKED SCREEN */
+        .locked-screen {
+            text-align: center; padding: 80px 40px;
+            display: flex; flex-direction: column; align-items: center; gap: 16px;
+        }
+        .locked-screen .lock-icon { font-size: 3.5rem; }
+        .locked-screen h2 { font-size: 1.6rem; font-weight: 800; }
+        .locked-screen p { color: var(--text-muted); max-width: 360px; }
+        .locked-screen .countdown {
+            background: var(--gold-dim); border: 1px solid var(--gold);
+            color: var(--gold); padding: 10px 24px; border-radius: 99px;
+            font-weight: 700; font-size: 0.9rem;
+        }
+
+        /* 🔝 BACK TO TOP */
+        .back-to-top {
+            position: fixed; bottom: 32px; right: 32px;
+            width: 44px; height: 44px; border-radius: 12px;
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            color: var(--text-muted); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; transition: all 0.25s;
+            opacity: 0; transform: translateY(10px); pointer-events: none; z-index: 80;
+        }
+        .back-to-top.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        .back-to-top:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-dim); transform: translateY(-2px); }
+
+        /* 📢 TOAST */
+        .toast {
+            position: fixed; bottom: 32px; left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            color: var(--text-main); padding: 12px 22px; border-radius: 12px;
+            font-size: 0.9rem; font-weight: 600;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3); z-index: 500;
+            opacity: 0; transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            pointer-events: none; white-space: nowrap;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* 📱 RESPONSIVE */
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            body.sidebar-open .sidebar { transform: translateX(0); }
+            body.focus-mode .sidebar { transform: translateX(-100%); }
+            .main-wrapper { margin-left: 0 !important; }
+            .progress-container { left: 0 !important; width: 100% !important; }
+            .topbar { padding: 10px 16px; }
+            .content { padding: 16px 18px 100px; }
+            .hamburger { display: flex; }
+            .reading-time { display: none; }
+            .title-block h1 { font-size: 1.5rem; }
+            .card { padding: 20px 18px; }
+            .quiz-question { padding: 20px 18px; }
+            .back-to-top { bottom: 20px; right: 16px; }
+            .toast { font-size: 0.82rem; padding: 10px 16px; max-width: 85vw; white-space: normal; text-align: center; }
+            .stack-grid { grid-template-columns: repeat(3, 1fr); }
+            .flow { gap: 4px; }
+            .flow-step { font-size: 0.75rem; padding: 6px 10px; }
+        }
+        @media (max-width: 400px) {
+            .btn span.btn-label { display: none; }
+        }
+    </style>
+<style>
+      .deep-dive-content pre {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 16px;
+        border-radius: 8px;
+        overflow-x: auto;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.85rem;
+        margin: 16px 0;
+        border: 1px solid rgba(255,255,255,0.1);
+      }
+      .deep-dive-content code {
+        font-family: 'JetBrains Mono', monospace;
+        background: rgba(255,255,255,0.1);
+        padding: 2px 4px;
+        border-radius: 4px;
+      }
+      .deep-dive-content pre code {
+        background: transparent;
+        padding: 0;
+      }
+    </style></head>
+<body>
+
+    <div class="progress-container"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="overlay" id="overlay"></div>
+    <div class="toast" id="toast"></div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <span>🏨</span>
+            <div>The Gilpin Gazette<span class="brand-sub">Developer Edition</span></div>
+        </div>
+
+        <div class="lesson-nav" id="nav-1" onclick="goToLesson(1)">
+            <span>📋</span>
+            <div class="nav-label">1. The Big Picture<span class="locked-date">Architecture &amp; Overview</span></div>
+            <span class="nav-check">✔️</span>
+        </div>
+        <div class="lesson-nav" id="nav-2" onclick="goToLesson(2)">
+            <span>🔒</span>
+            <div class="nav-label">2. Auth &amp; Security<span class="locked-date">Guarding the Kingdom</span></div>
+            <span class="nav-check">✔️</span>
+        </div>
+        <div class="lesson-nav" id="nav-3" onclick="goToLesson(3)">
+            <span>📄</span>
+            <div class="nav-label">3. The PDF Parser<span class="locked-date">Turning Paper into Data</span></div>
+            <span class="nav-check">✔️</span>
+        </div>
+        <div class="sidebar-divider"></div>
+        <div class="lesson-nav" id="nav-4" onclick="goToLesson(4)">
+            <span>🔥</span>
+            <div class="nav-label">4. Firebase RTDB<span class="locked-date">The Real-Time Engine</span></div>
+            <span class="nav-check">✔️</span>
+        </div>
+        <div class="lesson-nav" id="nav-5" onclick="goToLesson(5)">
+            <span>✨</span>
+            <div class="nav-label">5. AI / Gemini Features<span class="locked-date">The Intelligence Layer</span></div>
+            <span class="nav-check">✔️</span>
+        </div>
+        <div class="lesson-nav" id="nav-6" onclick="goToLesson(6)">
+            <span>🖥️</span>
+            <div class="nav-label">6. Dashboards &amp; Views<span class="locked-date">The Multi-View Interface</span></div>
+            <span class="nav-check">✔️</span>
+        </div>
+        <div class="lesson-nav" id="nav-7" onclick="goToLesson(7)">
+            <span>🛡️</span>
+            <div class="nav-label">7. Production Readiness<span class="locked-date">Audits &amp; Optimizations</span></div>
+            <span class="nav-check">✔️</span>
+        </div>
+        <div class="lesson-nav active" id="nav-8" onclick="goToLesson(8)">
+            <span>🌐</span>
+            <div class="nav-label">8. Advanced Integration<span class="locked-date">Global Standards &amp; AI</span></div>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main-wrapper">
+        <div class="topbar">
+            <div class="topbar-left">
+                <button class="hamburger" id="hamburger">☰</button>
+                <div class="reading-time">🕒 <span id="readingTime">?</span></div>
+            </div>
+            <div class="topbar-right">
+                <button class="btn" id="focusToggle" title="Focus Mode (F)"><span>🔲</span><span class="btn-label">Focus</span></button>
+                <button class="btn" id="themeToggle" title="Theme (T)"><span id="themeIcon">🌓</span><span class="btn-label">Theme</span></button>
+            </div>
+        </div>
+
+        <!-- 📘 LESSON 1 -->
+        <div class="lesson-view" id="lesson-1">
+            <div class="content">
+                <div class="title-block">
+                    <div class="issue-badge">📖 Issue #1 — Foundations</div>
+                    <h1>The Big Picture:<br>Architecture &amp; Overview</h1>
+                    <div class="title-meta">
+                        <span>🕒 Lesson 1 of 7</span>
+                        <span>🏨 Gilpin Hotel</span>
+                        <span>✔️ Completed</span>
+                    </div>
+                </div>
+
+                <div class="quote">
+                    "Before you write a single line, understand the system. Every great tool starts with a clear picture of the whole."
+                    <cite>— Gilpin Arrivals Tool, Architecture Notes</cite>
+                </div>
+
+                <div class="card">
+                    <h3>🛠️ What Is the Gilpin Arrivals Tool?</h3>
+                    <p>A <strong>real-time operational dashboard</strong> for Gilpin Hotel staff. It replaces manual paper-based check-in processes by parsing the hotel's PDF arrival sheets and presenting them as a live, collaborative, interactive interface.</p>
+                    <ul>
+                        <li><strong>Receptionists</strong> see who's arriving, their room, dietary needs, and car registration.</li>
+                        <li><strong>Night staff</strong> use it for the morning handover — a snapshot of the previous night.</li>
+                        <li><strong>Managers</strong> can lock a session once it's finalised to prevent edits.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>🚀 The Tech Stack</h3>
+                    <p>Every technology was chosen deliberately — here's why each one earns its place:</p>
+                    <div class="stack-grid">
+                        <div class="stack-item"><span class="stack-icon">⚛️</span><span class="stack-name">React</span><span class="stack-role">UI Layer</span></div>
+                        <div class="stack-item"><span class="stack-icon">📘</span><span class="stack-name">TypeScript</span><span class="stack-role">Type Safety</span></div>
+                        <div class="stack-item"><span class="stack-icon">⚡</span><span class="stack-name">Vite</span><span class="stack-role">Build Tool</span></div>
+                        <div class="stack-item"><span class="stack-icon">🔥</span><span class="stack-name">Firebase</span><span class="stack-role">Backend</span></div>
+                        <div class="stack-item"><span class="stack-icon">📄</span><span class="stack-name">pdfjs-dist</span><span class="stack-role">PDF Parsing</span></div>
+                        <div class="stack-item"><span class="stack-icon">☁️</span><span class="stack-name">Vercel</span><span class="stack-role">Hosting</span></div>
+                    </div>
+                    <p><strong>Why Firebase?</strong> The real-time database allows multiple staff members to see updates instantly — no page refresh, no polling. When one receptionist checks a guest in, everyone else sees it within milliseconds.</p>
+                </div><div class="deep-dive-content"><div class="card">
+<p>Welcome to the Developer Edition deep-dive of the Gilpin Arrivals Tool. In this lesson, we break down the architecture from a high-level concept into actual code. The tool uses a modern stack: <strong>React (UI), TypeScript (Type Safety), Vite (Build Tool), Firebase Realtime Database (Backend), and pdfjs-dist (PDF Parsing)</strong>.</p>
+</div>
+<div class="card">
+<h3>💻 1. Project Initialization &amp; Firebase Setup</h3>
+<p>The heart of the Gilpin Arrivals Tool relies on Firebase to maintain state across all connected clients. Below is how we initialize the Firebase application and ensure we only have one instance running.</p>
+<pre><code class="language-typescript">// src/services/firebaseConfig.ts
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getDatabase } from 'firebase/database';
+import { getAuth } from 'firebase/auth';
+
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
+};
+
+// Singleton pattern to prevent re-initialization in React strict mode or HMR
+export const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+export const db = getDatabase(app);
+export const auth = getAuth(app);
+</code></pre>
+
+</div>
+<div class="card">
+<h3>💻 2. Core Modules and Types</h3>
+<p>TypeScript helps us define exactly what a "Session" and a "Guest" look like. This guarantees that our React UI and Firebase database perfectly align.</p>
+<pre><code class="language-typescript">// src/types/GuestData.ts
+export interface GuestData {
+  id: string;
+  roomNumber: string;
+  guestName: string;
+  isVIP: boolean;
+  dietaryRequirements: string[];
+  carRegistration?: string;
+  notes: string;
+  property: 'MainHotel' | 'LakeHouse';
+}
+
+export interface ArrivalSession {
+  sessionId: string;      // Format: YYYY-MM-DD
+  date: string;
+  isLocked: boolean;
+  guests: Record&lt;string, GuestData&gt;;
+  lastUpdated: number;
+}
+</code></pre>
+
+</div>
+<div class="card">
+<h3>💻 3. The React Entry Point (Vite)</h3>
+<p>Our Vite entrypoint wraps the application in the required context providers, like AuthProvider and ViewProvider, setting the stage for the departmental dashboards.</p>
+<pre><code class="language-tsx">// src/main.tsx
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { App } from './App';
+import { AuthProvider } from './context/AuthContext';
+import { ViewProvider } from './context/ViewContext';
+import './index.css';
+
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+  &lt;React.StrictMode&gt;
+    &lt;AuthProvider&gt;
+      &lt;ViewProvider&gt;
+        &lt;App /&gt;
+      &lt;/ViewProvider&gt;
+    &lt;/AuthProvider&gt;
+  &lt;/React.StrictMode&gt;
+);
+</code></pre>
+
+</div>
+<div class="card">
+<h3>💻 Summary</h3>
+<p>By typing our data and initializing a singleton Firebase instance, we've set the stage for real-time collaboration. The real magic happens when we pipe the PDF data into these structures, which we will explore in subsequent lessons.</p>
+
+</div>
+</div>
+
+                <div class="card">
+                    <h3>🗺️ The Data Flow</h3>
+                    <p>From a PDF on someone's desktop to a live dashboard on every screen in the hotel:</p>
+                    <div class="flow">
+                        <div class="flow-step">📄 PMS Export</div><div class="flow-arrow">➔</div>
+                        <div class="flow-step">📤 File Upload</div><div class="flow-arrow">➔</div>
+                        <div class="flow-step">⚙️ PDF Parser</div><div class="flow-arrow">➔</div>
+                        <div class="flow-step">🔥 Firebase RTDB</div><div class="flow-arrow">➔</div>
+                        <div class="flow-step">🖥️ Live Dashboard</div>
+                    </div>
+                    <p>The whole pipeline completes in <mark>under 3 seconds</mark> for a standard 40-room arrival sheet.</p>
+                </div>
+
+                <div class="card">
+                    <h3>🧱 Core Modules</h3>
+                    <div class="table-wrap">
+                        <table>
+                            <tbody><tr><th>Module</th><th>Responsibility</th></tr>
+                            <tr><td><code>PDFService</code></td><td>Parse uploaded PDF files into structured guest data</td></tr>
+                            <tr><td><code>FirebaseService</code></td><td>Read/write sessions to Realtime Database</td></tr>
+                            <tr><td><code>AuthService</code></td><td>Firebase Auth — login, roles, session guards</td></tr>
+                            <tr><td><code>SessionManager</code></td><td>Coordinate presence, locking, and handover state</td></tr>
+                            <tr><td><code>GuestCard</code></td><td>React component rendering a single guest record</td></tr>
+                        </tbody></table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🏠 Lake House vs Main Hotel</h3>
+                    <p>Gilpin is actually <strong>two properties</strong> — the Main Hotel and the Lake House. The tool handles them separately:</p>
+                    <ul>
+                        <li>Each property has its own room numbering convention and PDF layout.</li>
+                        <li>The parser detects which property a PDF belongs to automatically.</li>
+                        <li>Dashboards can be filtered by property so staff don't see irrelevant data.</li>
+                    </ul>
+                </div>
+
+                <div class="quiz-section">
+                    <div class="quiz-header">
+                        <div class="issue-badge">❓ Knowledge Check</div>
+                        <h2>Architecture Mastery</h2>
+                    </div>
+                    <div id="quiz-container-1">
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">1. What is the primary purpose of the Gilpin Arrivals Tool?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Online hotel booking platform</button>
+                                <button class="option-btn" data-index="1">B) Staff payroll management</button>
+                                <button class="option-btn" data-index="2">C) Real-time dashboard replacing manual paper check-in</button>
+                                <button class="option-btn" data-index="3">D) Guest feedback collection</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">2. Why was Firebase Realtime Database chosen as the backend?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) It's the cheapest option available</button>
+                                <button class="option-btn" data-index="1">B) It pushes updates instantly to all connected clients</button>
+                                <button class="option-btn" data-index="2">C) It supports SQL queries</button>
+                                <button class="option-btn" data-index="3">D) It has the best mobile SDK</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="0">
+                            <p class="q-text">3. How many properties does Gilpin operate, and how does the tool handle them?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Two — detected automatically with separate dashboards</button>
+                                <button class="option-btn" data-index="1">B) One — it's a single hotel</button>
+                                <button class="option-btn" data-index="2">C) Three — requires manual selection on upload</button>
+                                <button class="option-btn" data-index="3">D) Two — staff must tag each PDF manually</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="3">
+                            <p class="q-text">4. Which module is responsible for coordinating presence and the locking mechanism?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) PDFService</button>
+                                <button class="option-btn" data-index="1">B) GuestCard</button>
+                                <button class="option-btn" data-index="2">C) AuthService</button>
+                                <button class="option-btn" data-index="3">D) SessionManager</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quiz-score" id="score-1">
+                        <div class="score-num" id="score-num-1">0/4</div>
+                        <h2 id="score-title-1">Keep Studying</h2>
+                        <p id="score-text-1">Re-read the cards above before moving on.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 📘 LESSON 2 -->
+        <div class="lesson-view" id="lesson-2">
+            <div class="content">
+                <div class="title-block">
+                    <div class="issue-badge">🛡️ Issue #2 — Security</div>
+                    <h1>Auth &amp; Security:<br>Guarding the Kingdom</h1>
+                    <div class="title-meta">
+                        <span>🕒 Lesson 2 of 7</span>
+                        <span>🏨 Gilpin Hotel</span>
+                        <span>✔️ Completed</span>
+                    </div>
+                </div>
+
+                <div class="quote">
+                    "Security isn't an add-on. It's the foundation. Every route, every write, every read — trust nothing until it's verified."
+                    <cite>— Gilpin Arrivals Tool, Security Architecture</cite>
+                </div>
+
+                <div class="card">
+                    <h3>🔐 Firebase Authentication</h3>
+                    <p>The tool uses <strong>Firebase Authentication</strong> as its identity layer. Staff log in with email and password — no social logins, no magic links. Clean, simple, auditable.</p>
+                    <ul>
+                        <li><strong>Session persistence:</strong> Firebase keeps users logged in across browser sessions using secure tokens stored in IndexedDB.</li>
+                        <li><strong>Automatic token refresh:</strong> Firebase handles token expiry silently — staff never get logged out mid-shift.</li>
+                        <li><strong>Auth state listener:</strong> <code>onAuthStateChanged</code> reactively updates the entire UI when login state changes.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>👥 Role-Based Access Control (RBAC)</h3>
+                    <p>Not all staff are equal. The tool enforces roles using <strong>Firebase Custom Claims</strong> — metadata attached to the user's JWT token at the server level.</p>
+                    <div class="table-wrap">
+                        <table>
+                            <tbody><tr><th>Role</th><th>Can View</th><th>Can Edit</th><th>Can Lock</th></tr>
+                            <tr><td><mark>Admin</mark></td><td>✅</td><td>✅</td><td>✅</td></tr>
+                            <tr><td>Staff</td><td>✅</td><td>✅</td><td>❌</td></tr>
+                            <tr><td>Viewer</td><td>❌ (Revoked)</td><td>❌</td><td>❌</td></tr>
+                        </tbody></table>
+                    </div>
+                    <p><em>Note: Viewer access was recently revoked at the database level. Only explicitly designated Staff and Admins can view session data now.</em></p>
+                    <p>Custom claims are set via the <strong>Firebase Admin SDK</strong> and are verified on both the client and in Firebase Security Rules — so they cannot be spoofed.</p>
+                </div><div class="deep-dive-content"><div class="card">
+<p>In a live hotel environment, security is critical. Not everyone should be able to alter guest records or lock sessions. We enforce this through <strong>Firebase Authentication, Custom Claims, and server-side Realtime Database Security Rules</strong>.</p>
+</div>
+<div class="card">
+<h3>💻 1. Firebase Custom Claims (Role-Based Access Control)</h3>
+<p>We assign roles (<code>admin</code>, <code>staff</code>, <code>viewer</code>) securely using the Firebase Admin SDK. These claims are baked into the JWT token.</p>
+<pre><code class="language-typescript">// server/setCustomClaims.ts (Node.js script)
+import * as admin from 'firebase-admin';
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
+
+export const setAdminRole = async (uid: string) =&gt; {
+  await admin.auth().setCustomUserClaims(uid, { role: 'admin' });
+  console.log(`Successfully granted admin privileges to user: ${uid}`);
+};
+</code></pre>
+<p>On the client, we forcefully refresh the token to apply the new claim immediately:</p>
+<pre><code class="language-typescript">// src/services/authService.ts
+export const refreshUserToken = async () =&gt; {
+  const user = auth.currentUser;
+  if (user) {
+    // Passing true forces a token refresh, fetching latest custom claims
+    await user.getIdToken(true); 
+  }
+};
+</code></pre>
+
+</div>
+<div class="card">
+<h3>💻 2. React Route Guards</h3>
+<p>We must ensure users without appropriate roles never even render protected components.</p>
+<pre><code class="language-tsx">// src/components/ProtectedRoute.tsx
+import React, { useEffect, useState } from 'react';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+  requiredRole?: 'admin' | 'staff' | 'viewer';
+}
+
+export const ProtectedRoute: React.FC&lt;ProtectedRouteProps&gt; = ({ children, requiredRole }) =&gt; {
+  const { user, loading, role } = useAuth();
+
+  if (loading) return &lt;div className="spinner"&gt;Authenticating...&lt;/div&gt;;
+  if (!user) return &lt;Navigate to="/login" /&gt;;
+  
+  if (requiredRole === 'admin' &amp;&amp; role !== 'admin') {
+    return &lt;Navigate to="/unauthorized" /&gt;;
+  }
+
+  return &lt;&gt;{children}&lt;/&gt;;
+};
+</code></pre>
+
+</div>
+<div class="card">
+<h3>💻 3. Firebase Realtime Database Security Rules</h3>
+<p>Client-side security is just UX. Real security lives on the server. Here are the strict rules applied to the Realtime Database.</p>
+<pre><code class="language-json">// database.rules.json
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    
+    "sessions": {
+      "$sessionId": {
+        // Only staff or admins can read sessions
+        ".read": "auth != null &amp;&amp; (auth.token.role === 'staff' || auth.token.role === 'admin')",
+        
+        // Only admins can delete a session completely
+        ".write": "auth != null &amp;&amp; auth.token.role === 'admin'",
+        
+        "guests": {
+          "$guestId": {
+            // Staff can write/update guest nodes, but only if the session is NOT locked
+            ".write": "auth != null &amp;&amp; (auth.token.role === 'staff' || auth.token.role === 'admin') &amp;&amp; root.child('sessions/' + $sessionId + '/isLocked').val() !== true",
+            
+            // Payload validation: preventing database bloat or injection
+            "notes": {
+              ".validate": "newData.isString() &amp;&amp; newData.val().length &lt;= 5000"
+            }
+          }
+        }
+      }
+    },
+    
+    "presence": {
+      // Anyone authenticated can read presence
+      ".read": "auth != null",
+      "$sessionId": {
+        "$uid": {
+          // You can only write to your own presence node
+          ".write": "auth != null &amp;&amp; $uid === auth.uid"
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>By layering Custom Claims with strict DB Rules, we guarantee that viewers cannot write, staff cannot modify locked sessions, and unauthorized users are completely blocked.</p>
+
+</div>
+</div>
+
+                <div class="card">
+                    <h3>🛡️ Firebase Security Rules (Recently Hardened)</h3>
+                    <p>The Realtime Database is locked down by rules that run <em>server-side</em>. Recent security audits introduced several strict enforcements:</p>
+                    <ul>
+                        <li><strong>Strict RBAC &amp; Auth:</strong> All read and write operations explicitly require <code>auth != null</code> AND <code>auth.token.email != null</code> (blocking anonymous auth completely), AND the role must be exactly <code>staff</code> or <code>admin</code>.</li>
+                        <li><strong>Payload Validation:</strong> Every single field (like guest notes, room names, etc.) is strictly validated for type and length (e.g., <code>newData.isString() &amp;&amp; newData.val().length &lt;= 5000</code>) to prevent payload injection or database bloat.</li>
+                        <li><strong>Asymmetric Access:</strong> Nodes like <code>heartbeat</code> are write-only (reads are blocked to prevent scraping), while <code>analytics.snapshots</code> are read-only (prevents client-side tampering).</li>
+                        <li><strong>Default Deny:</strong> A catch-all <code>$other</code> rule explicitly blocks any reads or writes to undefined nodes.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>🛤️ Route Guards</h3>
+                    <p>On the client side, React routes are wrapped in <strong>auth guard components</strong> that check the user's state before rendering:</p>
+                    <div class="flow">
+                        <div class="flow-step">Route Request</div><div class="flow-arrow">➔</div>
+                        <div class="flow-step">Auth Check</div><div class="flow-arrow">➔</div>
+                        <div class="flow-step">Role Check</div><div class="flow-arrow">➔</div>
+                        <div class="flow-step">✅ Render</div>
+                    </div>
+                    <p>If any check fails, the user is redirected to the login screen. This prevents even a quick flash of protected content.</p>
+                </div>
+
+                <div class="card">
+                    <h3>⚠️ Common Security Pitfalls</h3>
+                    <ul>
+                        <li><strong>Client-only role checks:</strong> Never trust the client alone. Always back it up with Security Rules.</li>
+                        <li><strong>Hardcoded secrets:</strong> API keys live in <code>.env</code> files — never committed to git. The Firebase config is safe to expose (it's public by design), but the Admin SDK key is not.</li>
+                        <li><strong>Stale claims:</strong> Custom claims are cached in the JWT. After updating a role, call <code>user.getIdToken(true)</code> to force a refresh.</li>
+                    </ul>
+                </div>
+
+                <div class="quiz-section">
+                    <div class="quiz-header">
+                        <div class="issue-badge">❓ Knowledge Check</div>
+                        <h2>Security Mastery</h2>
+                    </div>
+                    <div id="quiz-container-2">
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">1. Where are Firebase Custom Claims stored and verified?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) In localStorage on the client</button>
+                                <button class="option-btn" data-index="1">B) Inside the user's JWT token, verified server-side</button>
+                                <button class="option-btn" data-index="2">C) In a separate MySQL database</button>
+                                <button class="option-btn" data-index="3">D) In the React component state</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">2. Which role can lock a session to prevent further edits?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Viewer</button>
+                                <button class="option-btn" data-index="1">B) Staff</button>
+                                <button class="option-btn" data-index="2">C) Admin</button>
+                                <button class="option-btn" data-index="3">D) Any authenticated user</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="3">
+                            <p class="q-text">3. What must you call after updating a user's custom claim to ensure it takes effect immediately?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) firebase.auth().signOut()</button>
+                                <button class="option-btn" data-index="1">B) window.location.reload()</button>
+                                <button class="option-btn" data-index="2">C) updateProfile(user)</button>
+                                <button class="option-btn" data-index="3">D) user.getIdToken(true)</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="0">
+                            <p class="q-text">4. Firebase Security Rules run on the...</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Server — they cannot be bypassed by the client</button>
+                                <button class="option-btn" data-index="1">B) Client — they are downloaded and run in the browser</button>
+                                <button class="option-btn" data-index="2">C) Edge — they run in Cloudflare Workers</button>
+                                <button class="option-btn" data-index="3">D) Both client and server equally</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quiz-score" id="score-2">
+                        <div class="score-num" id="score-num-2">0/4</div>
+                        <h2 id="score-title-2">Keep Studying</h2>
+                        <p id="score-text-2">Re-read the cards above before moving on.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 📘 LESSON 3 -->
+        <div class="lesson-view" id="lesson-3">
+            <div class="content">
+                <div class="title-block">
+                    <div class="issue-badge">📄 Issue #3 — Data Pipeline</div>
+                    <h1>The PDF Parser:<br>Turning Paper into Data</h1>
+                    <div class="title-meta">
+                        <span>🕒 Lesson 3 of 7</span>
+                        <span>🏨 Gilpin Hotel</span>
+                        <span>✔️ Completed</span>
+                    </div>
+                </div>
+
+                <div class="quote">
+                    "Data is the new oil, but raw PDFs are like unrefined crude. Our parser is the refinery that turns chaotic text into operational intelligence."
+                    <cite>— Gilpin Arrivals Tool, Architecture Notes</cite>
+                </div>
+
+                <div class="card">
+                    <h3>🏗️ The Three-Stage Pipeline</h3>
+                    <p>The journey from a PDF file to a live dashboard session involves three critical stages in the <code>PDFService</code>.</p>
+                    <ol>
+                        <li><strong>File Upload:</strong> The raw PDF is received and buffered for processing.</li>
+                        <li><strong>Raw Text Extraction:</strong> Using <code>pdfjs-dist</code>, the system extracts text while preserving <strong>positional information</strong> — the X/Y coordinates of every character.</li>
+                        <li><strong>Structural Synthesis:</strong> The raw strings are mapped into a <code>GuestData</code> model, identifying room numbers, names, and statuses.</li>
+                    </ol>
+                    <p>💡 Unlike simple text scrapers, our parser understands the <em>visual layout</em> of the page — not just the words on it.</p>
+                </div><div class="deep-dive-content"><div class="card">
+<p>Parsing messy PMS exports requires more than simple text extraction. The Gilpin Arrivals Tool utilizes <code>pdfjs-dist</code> to perform <strong>Coordinate-Based Parsing</strong>, reading text relative to its X/Y position on the page.</p>
+</div>
+<div class="card">
+<h3>💻 1. Extracting Text with Positional Data</h3>
+<p>Using <code>pdfjs-dist</code>, we extract not only the text content but the transform matrix, allowing us to map the X and Y coordinates.</p>
+<pre><code class="language-typescript">// src/services/pdfService.ts
+import * as pdfjsLib from 'pdfjs-dist';
+
+export interface TextItemWithCoords {
+  str: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+export const extractTextWithCoordinates = async (pdfFile: File): Promise&lt;TextItemWithCoords[]&gt; =&gt; {
+  const arrayBuffer = await pdfFile.arrayBuffer();
+  const pdfDocument = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const items: TextItemWithCoords[] = [];
+
+  for (let pageNum = 1; pageNum &lt;= pdfDocument.numPages; pageNum++) {
+    const page = await pdfDocument.getPage(pageNum);
+    const textContent = await page.getTextContent();
+
+    textContent.items.forEach((item: any) =&gt; {
+      // The transform array contains positioning info: [scaleX, skewY, skewX, scaleY, translateX, translateY]
+      const transform = item.transform;
+      items.push({
+        str: item.str,
+        x: transform[4],
+        y: transform[5],
+        width: item.width,
+        height: item.height
+      });
+    });
+  }
+
+  return items;
+};
+</code></pre>
+
+</div>
+<div class="card">
+<h3>💻 2. Horizontal Alignment and Grouping (Y-Axis Matching)</h3>
+<p>Once we have the coordinates, we group elements that share roughly the same Y coordinate (representing a single row/guest). </p>
+<pre><code class="language-typescript">// src/services/parserUtils.ts
+import { TextItemWithCoords } from './pdfService';
+
+const Y_TOLERANCE = 3.0; // Margin of error for row alignment
+
+export const groupIntoRows = (items: TextItemWithCoords[]): TextItemWithCoords[][] =&gt; {
+  const rows: TextItemWithCoords[][] = [];
+
+  // Sort top-to-bottom
+  items.sort((a, b) =&gt; b.y - a.y);
+
+  let currentRow: TextItemWithCoords[] = [];
+  let currentY = items[0]?.y;
+
+  items.forEach(item =&gt; {
+    // If the Y coordinate is within our tolerance, it belongs to the same row
+    if (Math.abs(item.y - currentY) &lt;= Y_TOLERANCE) {
+      currentRow.push(item);
+    } else {
+      // New row started
+      rows.push([...currentRow].sort((a, b) =&gt; a.x - b.x)); // Sort left-to-right within the row
+      currentRow = [item];
+      currentY = item.y;
+    }
+  });
+
+  if (currentRow.length &gt; 0) rows.push(currentRow);
+  return rows;
+};
+</code></pre>
+
+</div>
+<div class="card">
+<h3>💻 3. Regex Pattern Matchers</h3>
+<p>Even with grouping, we need to extract specific data shapes using Regular Expressions. </p>
+<pre><code class="language-typescript">// src/services/regexPatterns.ts
+
+// Match date formats like 14/03/2026 or 14/03/26
+export const DATE_REGEX = /(\d{2}\/\d{2}\/\d{2,4})/g;
+
+// Extract a room number, usually alphanumeric and 2-4 characters long
+export const ROOM_REGEX = /^(RM-\d{2,3}|[1-9]\d{1,2}|Lake-\d)$/i;
+
+// Parse the extracted text line
+export const extractArrivalData = (rawText: string) =&gt; {
+  const dates = rawText.match(DATE_REGEX);
+  const arrivalDate = dates ? dates[0] : null;
+
+  return { arrivalDate };
+};
+</code></pre>
+<p>By combining X/Y grouping and Regex extraction, the Gilpin parser remains incredibly resilient against minor column shifts or varying page margins.</p>
+
+</div>
+</div>
+
+                <div class="card">
+                    <h3>📍 Coordinate-Based Parsing</h3>
+                    <p>In <code>pdfService.ts</code>, we don't just search for text — we look at <em>where</em> it sits on the page.</p>
+                    <ul>
+                        <li><strong>Column Mapping:</strong> Precise X/Y coordinates define where the "Room" column ends and the "Guest Name" column begins.</li>
+                        <li><strong>Horizontal Alignment:</strong> Text sharing the same Y-axis is grouped into a single guest record.</li>
+                        <li><strong>Resilience:</strong> Handles PDFs with varying margins far better than naive line-by-line parsing.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>🔍 Regex: The Pattern Matchers</h3>
+                    <p>Even with coordinates, Regular Expressions validate and extract specific data types.</p>
+                    <div class="table-wrap">
+                        <table>
+                            <tbody><tr><th>Purpose</th><th>Pattern</th></tr>
+                            <tr><td><strong>Dates</strong></td><td><code>/(\d{2}\/\d{2}\/\d{4})/g</code></td></tr>
+                            <tr><td><strong>Guest Entries</strong></td><td>Matches standard arrival formats to trigger object creation.</td></tr>
+                        </tbody></table>
+                    </div>
+                    <p>Regex ensures room <mark>101</mark> isn't misread as a date fragment or part of a guest name.</p>
+                </div>
+
+                <div class="card">
+                    <h3>☀️ Morning Briefing vs. Arrivals</h3>
+                    <p>The app contains two distinct parsers for two document types:</p>
+                    <ul>
+                        <li><strong>Arrivals Parser:</strong> Individual guest records, car registrations, room assignments.</li>
+                        <li><strong>Morning Briefing Parser:</strong> High-level forecasting, restaurant diary entries, hotel statistics.</li>
+                    </ul>
+                    <p>Each uses a unique set of regex rules and coordinate maps tailored to its document's specific layout.</p>
+                </div>
+
+                <div class="card">
+                    <h3>🔄 Session Management &amp; Sync</h3>
+                    <p>Once parsed, data is pushed to <strong>Firebase Realtime Database</strong> to create a collaborative session.</p>
+                    <ol>
+                        <li><strong>Unique Key:</strong> Sessions are keyed by the arrival date — one session per day.</li>
+                        <li><strong>Presence:</strong> <code>/presence/{sessionId}</code> tracks who is currently viewing.</li>
+                        <li><strong>Locking:</strong> Admins set a flag in RTDB to prevent further edits after morning handover.</li>
+                    </ol>
+                </div>
+
+                <div class="card">
+                    <h3>⚠️ The Big Three: Common Failure Modes</h3>
+                    <ul>
+                        <li><strong>Format Inconsistency:</strong> PMS exports a PDF with slightly shifted columns, causing coordinate misses. <mark>Most common.</mark></li>
+                        <li><strong>Regex Failure:</strong> Unusual guest name or note doesn't match the expected pattern.</li>
+                        <li><strong>Sync Lag:</strong> Large PDFs (100+ guests) hitting Firebase simultaneously cause temporary UI stutters.</li>
+                    </ul>
+                </div>
+
+                <div class="quiz-section">
+                    <div class="quiz-header">
+                        <div class="issue-badge">❓ Knowledge Check</div>
+                        <h2>Data Pipeline Mastery</h2>
+                    </div>
+                    <div id="quiz-container-3">
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">1. Which library handles raw text extraction from PDF files?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) PDF-Lib</button>
+                                <button class="option-btn" data-index="1">B) Axios</button>
+                                <button class="option-btn" data-index="2">C) pdfjs-dist</button>
+                                <button class="option-btn" data-index="3">D) Puppeteer</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">2. What core technique does <code>pdfService.ts</code> use to distinguish between columns?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Counting spaces between words</button>
+                                <button class="option-btn" data-index="1">B) Coordinate-based parsing (X/Y positioning)</button>
+                                <button class="option-btn" data-index="2">C) Splitting by commas</button>
+                                <button class="option-btn" data-index="3">D) Machine Learning image recognition</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="3">
+                            <p class="q-text">3. What regex pattern extracts dates in DD/MM/YYYY format?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) /[A-Z]+/g</button>
+                                <button class="option-btn" data-index="1">B) /\d{3}/g</button>
+                                <button class="option-btn" data-index="2">C) /date:/i</button>
+                                <button class="option-btn" data-index="3">D) /(\d{2}\/\d{2}\/\d{4})/g</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="0">
+                            <p class="q-text">4. What is the main focus of the Morning Briefing parser?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Forecasting and restaurant diary entries</button>
+                                <button class="option-btn" data-index="1">B) It doesn't use regex</button>
+                                <button class="option-btn" data-index="2">C) It only handles Excel files</button>
+                                <button class="option-btn" data-index="3">D) It is only available to Admin roles</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">5. What is the most common failure mode for the PDF parser?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Firebase being offline</button>
+                                <button class="option-btn" data-index="1">B) Running out of disk space</button>
+                                <button class="option-btn" data-index="2">C) Format inconsistencies in the source PDF</button>
+                                <button class="option-btn" data-index="3">D) Browser theme selection</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quiz-score" id="score-3">
+                        <div class="score-num" id="score-num-3">0/5</div>
+                        <h2 id="score-title-3">Keep Studying</h2>
+                        <p id="score-text-3">Re-read the cards above before moving on.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 📘 LESSON 4 -->
+        <div class="lesson-view" id="lesson-4">
+            <div class="content">
+                <div class="title-block">
+                    <div class="issue-badge">🔥 Issue #4 — The Engine</div>
+                    <h1>Firebase RTDB:<br>The Real-Time Engine</h1>
+                    <div class="title-meta">
+                        <span>🕒 Lesson 4 of 7</span>
+                        <span>🏨 Gilpin Hotel</span>
+                        <span>✔️ Completed</span>
+                    </div>
+                </div>
+
+                <div class="quote">
+                    "In a fast-paced hotel environment, a delay of five seconds is an eternity. RTDB ensures that when a guest arrives at the gate, the front desk knows before they even park."
+                    <cite>— Gilpin Arrivals Tool, Performance Specs</cite>
+                </div>
+
+                <div class="card">
+                    <h3>⚡ Sync vs. Fetch: The Paradigm Shift</h3>
+                    <p>Traditional apps use <strong>REST APIs</strong> (Request ➔ Response). The Gilpin tool uses <strong>Data Synchronization</strong>.</p>
+                    <ul>
+                        <li><strong>No Polling:</strong> The client doesn't ask "Is there new data?". The server pushes data the millisecond it changes.</li>
+                        <li><strong>WebSockets:</strong> A persistent connection stays open between the browser and Firebase.</li>
+                        <li><strong>Latency:</strong> Updates typically propagate to all connected staff in <mark>&lt;200ms</mark>.</li>
+                    </ul>
+                </div><div class="deep-dive-content"><div class="card">
+<p>The power of the Gilpin Arrivals Tool is its real-time synchronicity. When the reception updates a guest, the change reflects on all screens under 200ms using Firebase WebSockets.</p>
+</div>
+<div class="card">
+<h3>💻 1. Data Synchronization (Sync vs Fetch)</h3>
+<p>We do not use <code>fetch</code> or polling. We set up an active listener using <code>onValue</code> in React.</p>
+<pre><code class="language-typescript">// src/hooks/useSessionData.ts
+import { useEffect, useState } from 'react';
+import { ref, onValue, off } from 'firebase/database';
+import { db } from '../services/firebaseConfig';
+import { ArrivalSession } from '../types/GuestData';
+
+export const useSessionData = (sessionId: string) =&gt; {
+  const [session, setSession] = useState&lt;ArrivalSession | null&gt;(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() =&gt; {
+    const sessionRef = ref(db, `sessions/${sessionId}`);
+    
+    // Subscribe to real-time updates
+    const unsubscribe = onValue(sessionRef, (snapshot) =&gt; {
+      if (snapshot.exists()) {
+        setSession(snapshot.val());
+      } else {
+        setSession(null);
+      }
+      setLoading(false);
+    });
+
+    // Cleanup the listener on unmount
+    return () =&gt; {
+      unsubscribe();
+    };
+  }, [sessionId]);
+
+  return { session, loading };
+};
+</code></pre>
+
+</div>
+<div class="card">
+<h3>💻 2. Presence Tracking: Who is Online?</h3>
+<p>To know which staff members are looking at a dashboard, we use <code>onDisconnect</code> to handle abrupt disconnections (tab close, crash, internet drop).</p>
+<pre><code class="language-typescript">// src/services/presenceService.ts
+import { ref, onDisconnect, set, remove, serverTimestamp } from 'firebase/database';
+import { db, auth } from './firebaseConfig';
+
+export const trackPresence = (sessionId: string, department: string) =&gt; {
+  const uid = auth.currentUser?.uid;
+  if (!uid) return;
+
+  const userPresenceRef = ref(db, `presence/${sessionId}/${uid}`);
+
+  // Set up the disconnection hook BEFORE writing the presence
+  // If the client disconnects, Firebase automatically removes this node
+  onDisconnect(userPresenceRef).remove().then(() =&gt; {
+    // Write the presence state
+    set(userPresenceRef, {
+      department,
+      onlineSince: serverTimestamp(),
+    });
+  });
+
+  return () =&gt; {
+    // Manual cleanup when the user leaves the route normally
+    remove(userPresenceRef);
+    onDisconnect(userPresenceRef).cancel(); // Cancel the disconnect hook
+  };
+};
+</code></pre>
+
+</div>
+<div class="card">
+<h3>💻 3. Optimistic Updates</h3>
+<p>Firebase handles local caching natively. If you write data while offline, Firebase caches it and syncs when reconnected.</p>
+<pre><code class="language-typescript">// src/services/guestService.ts
+import { ref, update } from 'firebase/database';
+import { db } from './firebaseConfig';
+
+export const updateGuestNote = async (sessionId: string, guestId: string, newNote: string) =&gt; {
+  const guestRef = ref(db, `sessions/${sessionId}/guests/${guestId}`);
+  
+  // This resolves instantly in the UI thanks to local caching, 
+  // syncing in the background automatically
+  await update(guestRef, {
+    notes: newNote,
+    lastUpdated: Date.now()
+  });
+};
+</code></pre>
+<p>This ensures the hotel staff never experience UI freezes, even on spotty hotel Wi-Fi.</p>
+
+</div>
+</div>
+
+                <div class="card">
+                    <h3>📂 The Data Tree</h3>
+                    <p>Unlike SQL tables, RTDB is one giant JSON tree. We structure it for speed and security:</p>
+                    <div class="table-wrap">
+                        <table>
+                            <tbody><tr><th>Path</th><th>Purpose</th></tr>
+                            <tr><td><code>/sessions/{date}</code></td><td>The core guest list and statuses for a specific day.</td></tr>
+                            <tr><td><code>/presence/{sessionId}</code></td><td>Ephemeral data: who is currently looking at this session.</td></tr>
+                            <tr><td><code>/bulletins</code></td><td>Global announcements and system-wide alerts.</td></tr>
+                            <tr><td><code>/handover</code></td><td>Shift-change notes and stayover calculations.</td></tr>
+                        </tbody></table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🤝 Presence Tracking: Who's Online?</h3>
+                    <p>The "Presence" system uses a special Firebase feature called <code>onDisconnect</code>.</p>
+                    <ol>
+                        <li>When a staff member opens the dashboard, they write their UID to <code>/presence/{sessionId}/{uid}</code>.</li>
+                        <li>The client registers an <code>onDisconnect().remove()</code> operation.</li>
+                        <li>If the browser closes, the tab crashes, or the Wi-Fi drops, <strong>Firebase itself</strong> deletes the record after a short timeout.</li>
+                    </ol>
+                    <p>This allows managers to see exactly which departments are currently monitoring the arrivals.</p>
+                </div>
+
+                <div class="card">
+                    <h3>🔒 Server-Side Enforcement</h3>
+                    <p>We don't trust the client to validate data. Our <strong>Security Rules</strong> act as a server-side firewall:</p>
+                    <ul>
+                        <li><strong>Auth Guard:</strong> <code>auth != null</code> ensures only logged-in staff can see anything.</li>
+                        <li><strong>Role Check:</strong> <code>auth.token.role === 'admin'</code> is required for destructive actions like deleting a session.</li>
+                        <li><strong>Schema Validation:</strong> Rules check that <code>newData.child('room').isString()</code> and length is valid, preventing malformed data from entering the tree.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>📶 Offline Resilience</h3>
+                    <p>Hotel Wi-Fi can be spotty. Firebase handles this gracefully:</p>
+                    <ul>
+                        <li><strong>Local Cache:</strong> Changes are written to a local buffer immediately (UI feels instant).</li>
+                        <li><strong>Background Sync:</strong> Once the connection is restored, Firebase merges the local changes back to the server.</li>
+                        <li><strong>Conflict Resolution:</strong> The "Last Write Wins" policy ensures the most recent edit is preserved.</li>
+                    </ul>
+                </div>
+
+                <div class="quiz-section">
+                    <div class="quiz-header">
+                        <div class="issue-badge">❓ Knowledge Check</div>
+                        <h2>RTDB Mastery</h2>
+                    </div>
+                    <div id="quiz-container-4">
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">1. What is the primary difference between RTDB and a traditional REST API?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) RTDB is slower but more secure</button>
+                                <button class="option-btn" data-index="1">B) RTDB pushes data to clients instantly via WebSockets</button>
+                                <button class="option-btn" data-index="2">C) RTDB only works on mobile devices</button>
+                                <button class="option-btn" data-index="3">D) REST APIs are better for real-time dashboards</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">2. How does the system automatically remove a user from the Presence list when they close their tab?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Using a setInterval timer</button>
+                                <button class="option-btn" data-index="1">B) By sending a 'goodbye' fetch request</button>
+                                <button class="option-btn" data-index="2">C) Using the onDisconnect() hook provided by Firebase</button>
+                                <button class="option-btn" data-index="3">D) By tracking mouse movements</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="0">
+                            <p class="q-text">3. In the RTDB data tree, where is the main guest list stored?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) /sessions</button>
+                                <button class="option-btn" data-index="1">B) /users</button>
+                                <button class="option-btn" data-index="2">C) /logs</button>
+                                <button class="option-btn" data-index="3">D) /config</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">4. What is the benefit of Firebase's local caching?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) It makes the PDF files smaller</button>
+                                <button class="option-btn" data-index="1">B) It encrypts the user's password</button>
+                                <button class="option-btn" data-index="2">C) It allows the app to work offline and sync later</button>
+                                <button class="option-btn" data-index="3">D) It increases the server cost</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">5. Where are the security rules that prevent unauthorized access executed?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) In the user's browser (React code)</button>
+                                <button class="option-btn" data-index="1">B) On the Firebase servers (Server-side)</button>
+                                <button class="option-btn" data-index="2">C) In the PDF parser service</button>
+                                <button class="option-btn" data-index="3">D) In the Vercel edge functions</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quiz-score" id="score-4">
+                        <div class="score-num" id="score-num-4">0/5</div>
+                        <h2 id="score-title-4">Keep Studying</h2>
+                        <p id="score-text-4">Re-read the cards above before moving on.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ✨ LESSON 5 -->
+        <div class="lesson-view" id="lesson-5">
+            <div class="content">
+                <div class="title-block">
+                    <div class="issue-badge">🛠️ Issue #5 — AI Integration</div>
+                    <h1>AI / Gemini Features:<br>The Intelligence Layer</h1>
+                    <div class="title-meta">
+                        <span>🕒 Lesson 5 of 7</span>
+                        <span>🏨 Gilpin Hotel</span>
+                        <span>✔️ Completed</span>
+                    </div>
+                </div>
+
+                <div class="quote">
+                    "AI isn't here to replace hospitality; it's here to empower it. By identifying patterns and auditing data in real-time, we free the staff to focus on the guest."
+                    <cite>— Gilpin Arrivals Tool, AI Strategy</cite>
+                </div>
+
+                <div class="card">
+                    <h3>🛠️ The AI Audit System</h3>
+                    <p>The core of the intelligence layer is the <strong>AI Audit system</strong>. It periodically scans guest records and sessions to identify inconsistencies, highlight VIPs, and predict operational needs.</p>
+                    <ul>
+                        <li><strong>Refinement:</strong> Automatically fixing common parsing errors or formatting issues.</li>
+                        <li><strong>Sentiment Analysis:</strong> Analyzing guest notes to flag specific preferences or potential issues before arrival.</li>
+                        <li><strong>Anomaly Detection:</strong> Flagging unusual booking patterns or data mismatches (e.g., room numbers that don't exist).</li>
+                    </ul>
+                </div><div class="deep-dive-content"><div class="card">
+<p>Integrating AI into an enterprise tool requires balancing reasoning capabilities with strict data privacy constraints. We utilize <strong>Gemini 1.5 Flash / 3 Pro</strong> but enforce an anonymization boundary before data ever hits the API.</p>
+</div>
+<div class="card">
+<h3>💻 1. PII Stripping (<code>anonymize.ts</code>)</h3>
+<p>To ensure GDPR compliance, real guest names and car registrations are tokenized. The AI only sees tokens like <code>Guest_A</code>.</p>
+<pre><code class="language-typescript">// src/utils/anonymize.ts
+
+export interface AnonymizedPayload {
+  sanitizedText: string;
+  mapping: Record&lt;string, string&gt;; // e.g., { "Guest_A": "John Doe" }
+}
+
+export const anonymizeGuestData = (rawNotes: string, guestNames: string[]): AnonymizedPayload =&gt; {
+  let sanitizedText = rawNotes;
+  const mapping: Record&lt;string, string&gt; = {};
+
+  guestNames.forEach((name, index) =&gt; {
+    const token = `Guest_${String.fromCharCode(65 + index)}`; // Guest_A, Guest_B...
+    mapping[token] = name;
+    
+    // Replace all occurrences of the guest's name with the token
+    const regex = new RegExp(`\\b${name}\\b`, 'gi');
+    sanitizedText = sanitizedText.replace(regex, token);
+  });
+
+  return { sanitizedText, mapping };
+};
+
+export const deanonymizeAIResponse = (aiResponse: string, mapping: Record&lt;string, string&gt;): string =&gt; {
+  let restoredText = aiResponse;
+  Object.entries(mapping).forEach(([token, realName]) =&gt; {
+    const regex = new RegExp(`\\b${token}\\b`, 'g');
+    restoredText = restoredText.replace(regex, realName);
+  });
+  return restoredText;
+};
+</code></pre>
+
+</div>
+<div class="card">
+<h3>💻 2. Serverless Execution with Gemini</h3>
+<p>Using a secure backend API route (or Firebase Function), we dispatch requests to the Gemini model.</p>
+<pre><code class="language-typescript">// api/geminiAudit.ts (Vercel Edge Function or Firebase Function)
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+
+export async function POST(req: Request) {
+  try {
+    const { sanitizedData } = await req.json();
+
+    // Use Gemini 1.5 Flash for high-speed, lower-complexity tasks
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+    const prompt = `
+      You are an expert hotel auditor. Analyze the following arrival data.
+      Highlight any VIPs, dietary conflicts, or missing room assignments.
+      Data: ${JSON.stringify(sanitizedData)}
+    `;
+
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+
+    return new Response(JSON.stringify({ auditResult: responseText }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (error) {
+    console.error('AI Audit Failed:', error);
+    return new Response(JSON.stringify({ error: 'Audit generation failed.' }), { status: 500 });
+  }
+}
+</code></pre>
+
+</div>
+<div class="card">
+<h3>💻 3. Resilience and Retry Logic</h3>
+<p>If the API fails due to rate limits, we use exponential backoff.</p>
+<pre><code class="language-typescript">// src/services/aiService.ts
+export const fetchAIAuditWithRetry = async (payload: any, retries = 3, delay = 1000): Promise&lt;string&gt; =&gt; {
+  try {
+    const response = await fetch('/api/geminiAudit', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    
+    if (!response.ok) throw new Error('API Error');
+    const data = await response.json();
+    return data.auditResult;
+  } catch (err) {
+    if (retries &gt; 0) {
+      await new Promise(res =&gt; setTimeout(res, delay));
+      return fetchAIAuditWithRetry(payload, retries - 1, delay * 2); // Exponential backoff
+    }
+    throw new Error('Failed to generate AI audit after multiple retries.');
+  }
+};
+</code></pre>
+<p>This strict architectural separation guarantees that intelligence enhancements never compromise data security or user experience stability.</p>
+
+</div>
+</div>
+
+                <div class="card">
+                    <h3>🤖 Gemini Integration</h3>
+                    <p>The tool leverages <strong>Google's Gemini models</strong> to process complex natural language data from the PDF exports.</p>
+                    <div class="stack-grid">
+                        <div class="stack-item"><span class="stack-icon">🧠</span><span class="stack-name">Gemini 1.5 Flash</span><span class="stack-role">Audit Engine</span></div>
+                        <div class="stack-item"><span class="stack-icon">⚡</span><span class="stack-name">Firebase Functions</span><span class="stack-role">Execution</span></div>
+                        <div class="stack-item"><span class="stack-icon">🛡️</span><span class="stack-name">Security Guards</span><span class="stack-role">Data Privacy</span></div>
+                    </div>
+                    <p>Gemini is used for <strong>summarizing morning briefings</strong> and generating the <strong>AI Audit reports</strong> that help managers optimize the hotel's performance.</p>
+                </div>
+
+                <div class="card">
+                    <h3>📊 Data Pipeline &amp; UI Polish</h3>
+                    <p>Recent updates have focused on the "Production Readiness" of these AI features:</p>
+                    <ul>
+                        <li><strong>Optimized Loading:</strong> Real-time streaming of AI insights ensures no UI blocking.</li>
+                        <li><strong>Secure Routing:</strong> AI audit results are protected by the same strict RBAC as the core guest data.</li>
+                        <li><strong>Visual Feedback:</strong> New animations and status indicators show exactly when the AI is "thinking" or "auditing".</li>
+                    </ul>
+                </div>
+
+                <div class="quiz-section">
+                    <div class="quiz-header">
+                        <div class="issue-badge">✅ Knowledge Check</div>
+                        <h2>AI &amp; Intelligence Mastery</h2>
+                    </div>
+                    <div id="quiz-container-5">
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">1. What is the primary role of the AI Audit system?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) To replace receptionists</button>
+                                <button class="option-btn" data-index="1">B) To book guests automatically</button>
+                                <button class="option-btn" data-index="2">C) To scan records for inconsistencies and operational insights</button>
+                                <button class="option-btn" data-index="3">D) To manage the hotel's social media</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">2. Which AI model is primarily used for the audit engine?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) GPT-3.5</button>
+                                <button class="option-btn" data-index="1">B) Gemini 1.5 Flash</button>
+                                <button class="option-btn" data-index="2">C) Claude 2.1</button>
+                                <button class="option-btn" data-index="3">D) Llama 3</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="0">
+                            <p class="q-text">3. How is AI processing feedback shown to the user?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Via animations and status indicators</button>
+                                <button class="option-btn" data-index="1">B) Through automated emails</button>
+                                <button class="option-btn" data-index="2">C) It isn't shown at all</button>
+                                <button class="option-btn" data-index="3">D) Using browser alert popups</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="3">
+                            <p class="q-text">4. What ensures that AI audit results are only visible to authorized staff?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Password-protected PDFs</button>
+                                <button class="option-btn" data-index="1">B) Physical locks on servers</button>
+                                <button class="option-btn" data-index="2">C) Client-side JavaScript hiding</button>
+                                <button class="option-btn" data-index="3">D) Strict Role-Based Access Control (RBAC)</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">5. What is "Sentiment Analysis" used for in this tool?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Predicting the weather</button>
+                                <button class="option-btn" data-index="1">B) Calculating room prices</button>
+                                <button class="option-btn" data-index="2">C) Flagging guest preferences or potential issues from notes</button>
+                                <button class="option-btn" data-index="3">D) Monitoring staff morale</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quiz-score" id="score-5">
+                        <div class="score-num" id="score-num-5">0/5</div>
+                        <h2 id="score-title-5">Keep Studying</h2>
+                        <p id="score-text-5">Re-read the cards above before moving on.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🖥️ LESSON 6 -->
+        <div class="lesson-view" id="lesson-6">
+            <div class="content">
+                <div class="title-block">
+                    <div class="issue-badge">🖥️ Issue #6 — UI &amp; Dashboards</div>
+                    <h1>Departmental Dashboards:<br>The Multi-View Interface</h1>
+                    <div class="title-meta">
+                        <span>🕒 Lesson 6 of 7</span>
+                        <span>🏨 Gilpin Hotel</span>
+                        <span>✔️ Completed</span>
+                    </div>
+                </div>
+
+                <div class="quote">
+                    "A great interface doesn't just display data; it adapts to the person using it. For a hotel to run smoothly, every department needs a window into the truth that's built for their specific needs."
+                    <cite>— Gilpin Arrivals Tool, UI Design Philosophy</cite>
+                </div>
+
+                <div class="card">
+                    <h3>🛠️ ViewManager: The Dynamic Switcher</h3>
+                    <p>At the heart of the dashboard is the <code>ViewManager</code>. This component is responsible for rendering the correct dashboard view based on the department currently selected by the user.</p>
+                    <ul>
+                        <li><strong>State-Driven:</strong> It uses the <code>dashboardView</code> state from the <code>ViewProvider</code> context.</li>
+                        <li><strong>Department-Centric:</strong> Switching views automatically filters and re-renders the UI to show only relevant data for that department (e.g., Housekeeping, Reception).</li>
+                        <li><strong>Access Controlled:</strong> The available views are restricted based on the user's role and cleared department permissions.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>📑 The 9 Key Dashboards</h3>
+                    <p>The system provides tailored views for every operational touchpoint in the hotel:</p>
+                    <div class="table-wrap">
+                        <table>
+                            <tbody><tr><th>Dashboard</th><th>Primary Audience</th><th>Key Features</th></tr>
+                            <tr><td>Reception</td><td>Front Desk</td><td>Check-ins/outs, guest management.</td></tr>
+                            <tr><td>Housekeeping</td><td>Cleaning Staff</td><td>Room status, cleaning task tracking.</td></tr>
+                            <tr><td>Handover Hub</td><td>All Staff</td><td>Shift transitions, stayover detection, AI reports.</td></tr>
+                            <tr><td>Bulletin</td><td>All Staff</td><td>Daily updates, system-wide alerts via Firebase.</td></tr>
+                            <tr><td>Maintenance</td><td>Engineering</td><td>Repair tracking and room inspections.</td></tr>
+                            <tr><td>Checkouts</td><td>Reception/Mgmt</td><td>Post-departure tracking and feedback.</td></tr>
+                            <tr><td>Statistics</td><td>Management</td><td>Occupancy and booking analytics.</td></tr>
+                            <tr><td>Admin Panel</td><td>Admins</td><td>User roles, permissions, and system config.</td></tr>
+                            <tr><td>Special Features</td><td>Designated Roles</td><td>Custom tools as needed.</td></tr>
+                        </tbody></table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🔘 GuestRow: Inline Operational Control</h3>
+                    <p>The <code>GuestRow</code> is where most interactions happen. It's designed for maximum efficiency without navigating away from the dashboard:</p>
+                    <ul>
+                        <li><strong>Inline Editing:</strong> Most fields (notes, room assignments) can be edited directly. Changes sync to Firebase the moment you finish typing.</li>
+                        <li><strong>Status Flags:</strong> Visual icons quickly highlight VIP status, dietary requirements, or specific guest needs.</li>
+                        <li><strong>Real-Time Feedback:</strong> Spinners and color changes indicate when a value is syncing or has been saved successfully.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>🛡️ Department Access Control (UI Level)</h3>
+                    <p>Beyond the core Firebase Security Rules, the UI implements <strong>Department Access Control</strong> to ensure staff only see what they need to see.</p>
+                    <ul>
+                        <li><strong>FULL_ACCESS_DEPTS:</strong> Certain roles (like Admin and Senior Management) have unrestricted access to all dashboard views.</li>
+                        <li><strong>Restricted Access:</strong> Staff in specific departments (e.g., Maintenance) are automatically routed to their relevant dashboard and may be blocked from viewing sensitive financial statistics.</li>
+                        <li><strong>Navigation Guards:</strong> The Navbar dynamically hides buttons for dashboards that the current user doesn't have permission to access.</li>
+                    </ul>
+                </div>
+
+                <div class="quiz-section">
+                    <div class="quiz-header">
+                        <div class="issue-badge">❓ Knowledge Check</div>
+                        <h2>UI &amp; Dashboard Mastery</h2>
+                    </div>
+                    <div id="quiz-container-6">
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">1. Which component is responsible for rendering different dashboards based on the selected department?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) GuestRow</button>
+                                <button class="option-btn" data-index="1">B) ViewManager</button>
+                                <button class="option-btn" data-index="2">C) PDFService</button>
+                                <button class="option-btn" data-index="3">D) Navbar</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="3">
+                            <p class="q-text">2. Which dashboard is specifically designed for shift transitions and stayover detection?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Reception</button>
+                                <button class="option-btn" data-index="1">B) Statistics</button>
+                                <button class="option-btn" data-index="2">C) Maintenance</button>
+                                <button class="option-btn" data-index="3">D) Handover Hub</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="0">
+                            <p class="q-text">3. What is the benefit of "Inline Editing" in the <code>GuestRow</code> component?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) It allows staff to update data instantly without leaving the dashboard</button>
+                                <button class="option-btn" data-index="1">B) It makes the PDF files smaller</button>
+                                <button class="option-btn" data-index="2">C) It automatically logs the user out</button>
+                                <button class="option-btn" data-index="3">D) It encrypts the room numbers</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">4. How does the UI handle users trying to access dashboards they aren't permitted to see?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) It displays an "Access Denied" error for every dashboard</button>
+                                <button class="option-btn" data-index="1">B) It requires a separate password for each tab</button>
+                                <button class="option-btn" data-index="2">C) It dynamically hides buttons for dashboards the user cannot access</button>
+                                <button class="option-btn" data-index="3">D) It allows everyone to see everything</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">5. Where are global announcements and system-wide alerts typically displayed?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Statistics Dashboard</button>
+                                <button class="option-btn" data-index="1">B) Bulletin Dashboard</button>
+                                <button class="option-btn" data-index="2">C) Admin Panel</button>
+                                <button class="option-btn" data-index="3">D) Maintenance Dashboard</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quiz-score" id="score-6">
+                        <div class="score-num" id="score-num-6">0/5</div>
+                        <h2 id="score-title-6">Keep Studying</h2>
+                        <p id="score-text-6">Re-read the cards above before moving on.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🛡️ LESSON 7 -->
+
+        <!-- 🌐 LESSON 8 -->
+        <div class="lesson-view" id="lesson-8">
+            <div class="content">
+                <div class="title-block">
+                    <div class="issue-badge">🌐 Issue #8 — Global Standards</div>
+                    <h1>Advanced Integration:<br>Global Standards &amp; AI Resilience</h1>
+                    <div class="title-meta">
+                        <span>🕒 Lesson 8 of 8</span>
+                        <span>🏨 Gilpin Hotel</span>
+                        <span>✨ Latest Developments</span>
+                    </div>
+                </div>
+
+                <div class="quote">
+                    "Building for tomorrow means anticipating global demands today. Our AI integrations are not just smart; they're secure, compliant, and architected for worldwide excellence."
+                    <cite>— Gilpin Arrivals Tool, Global Strategy</cite>
+                </div>
+
+                <div class="card">
+                    <h3>🧠 Strategic AI Model Orchestration</h3>
+                    <p>The Gilpin Arrivals Tool employs a sophisticated strategy for integrating AI, carefully selecting models based on task complexity and cost-efficiency. This ensures optimal performance without unnecessary resource consumption.</p>
+                    <ul>
+                        <li><strong>Gemini 3 Pro:</strong> Utilized for high-complexity tasks such as <strong>refining guest records</strong> with detailed PMS notes and generating bespoke <strong>itineraries</strong>. Its advanced reasoning capabilities are crucial here.</li>
+                        <li><strong>Gemini 2.5 Flash:</strong> Powers high-volume, lower-complexity tasks including <strong>analytics generation</strong>, <strong>sentiment analysis</strong> from guest notes, cleaning order suggestions, upgrade suggestions, and collating <strong>reviews</strong>. This model provides speed and efficiency.</li>
+                        <li><strong>Cost-Efficiency:</strong> This tiered model approach allows for a balance between processing power and operational costs, ensuring that advanced AI is used where it truly adds value.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>🔒 End-to-End Data Anonymization &amp; GDPR Compliance</h3>
+                    <p>Protecting guest privacy is paramount. The tool implements a robust anonymization layer to ensure GDPR and global data protection standards are met.</p>
+                    <ul>
+                        <li><strong>PII Stripping:</strong> Before any sensitive guest data (names, car registrations, booking stream details) is sent to AI endpoints, it is meticulously stripped and anonymized using the <code>anonymize.ts</code> utility.</li>
+                        <li><strong>Tokenization:</strong> Real guest information is temporarily replaced with generic tokens (e.g., "Guest A") during AI processing.</li>
+                        <li><strong>Local Restoration:</strong> Upon receiving AI-processed results, the original guest information is safely restored locally using a secure name mapping system, ensuring PII is never exposed to external AI models.</li>
+                        <li><strong>Firebase Security Rules:</strong> Further reinforced by server-side Firebase Security Rules that strictly control access based on roles and department, preventing unauthorized exposure.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>🛡️ Robust Session Management &amp; API Security</h3>
+                    <p>Ensuring secure and seamless operations, the tool implements advanced session management and API protection mechanisms.</p>
+                    <ul>
+                        <li><strong>HMAC Session Tokens:</strong> Beyond Firebase ID Tokens, API requests are secured with server-generated HMAC session tokens (format: <code>timestamp.hmac</code>). These tokens are SHA-256 hashed with a secret key (<code>process.env.AUTH_SECRET</code>) and have an 8-hour expiry, protecting against token spoofing and replay attacks.</li>
+                        <li><strong>Firebase Authentication &amp; RBAC:</strong> Users authenticate via Firebase, and custom claims enforce Role-Based Access Control (<code>admin</code>, <code>staff</code>, <code>viewer</code>) and department-specific permissions.</li>
+                        <li><strong>CORS &amp; Origin Validation:</strong> Cross-Origin Resource Sharing (CORS) is strictly enforced with whitelisted origins (<code>localhost</code>, <code>*.vercel.app</code>, custom domains) at the API level, preventing unauthorized cross-origin requests.</li>
+                        <li><strong>Live Token Endpoint:</strong> The endpoint serving sensitive API keys (e.g., Gemini API key) is protected by HMAC Bearer tokens, origin validation, and strict no-cache headers.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>⚡ Real-Time AI &amp; Resilient Data Pipelines</h3>
+                    <p>The tool is designed for high availability and responsiveness, incorporating real-time AI capabilities and robust error handling for data pipelines.</p>
+                    <ul>
+                        <li><strong>Live Voice Assistant:</strong> Features a real-time WebSocket connection for audio streaming, enabling instantaneous transcription and department-specific AI interactions. This ensures dynamic, contextual conversations with AI.</li>
+                        <li><strong>Batch Processing &amp; Retry Logic:</strong> Guests are processed in manageable chunks, and requests that encounter transient errors are retried with exponential backoff, preventing system overload and ensuring data integrity.</li>
+                        <li><strong>Comprehensive Error Handling:</strong> The <code>geminiService.ts</code> implements robust error capturing, logging, and user-friendly notifications for API failures.</li>
+                        <li><strong>PDF Parser Resilience:</strong> Despite format inconsistencies being the most common failure mode, coordinate-based parsing and strict regex patterns ensure the data pipeline remains resilient, extracting structured guest data reliably.</li>
+                    </ul>
+                </div>
+
+                <div class="quiz-section">
+                    <div class="quiz-header">
+                        <div class="issue-badge">❓ Knowledge Check</div>
+                        <h2>Advanced Integration Mastery</h2>
+                    </div>
+                    <div id="quiz-container-8">
+                        <div class="quiz-question" data-answer="0">
+                            <p class="q-text">1. Which Gemini model is typically used for high-complexity tasks like itinerary generation?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Gemini 3 Pro</button>
+                                <button class="option-btn" data-index="1">B) Gemini 2.5 Flash</button>
+                                <button class="option-btn" data-index="2">C) Gemini Ultra</button>
+                                <button class="option-btn" data-index="3">D) Gemini Nano</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">2. What is the primary purpose of the <code>anonymize.ts</code> utility?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) To encrypt all database records</button>
+                                <button class="option-btn" data-index="1">B) To strip PII before sending data to AI endpoints for GDPR compliance</button>
+                                <button class="option-btn" data-index="2">C) To compress PDF files for faster upload</button>
+                                <button class="option-btn" data-index="3">D) To generate unique session IDs</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="0">
+                            <p class="q-text">3. What is the structure of the HMAC session token used for API requests?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) <code>timestamp.hmac</code></button>
+                                <button class="option-btn" data-index="1">B) A simple UUID</button>
+                                <button class="option-btn" data-index="2">C) An unhashed password</button>
+                                <button class="option-btn" data-index="3">D) A Firebase ID Token directly</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">4. How does the Live Voice Assistant feature handle real-time audio?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) By polling an audio API every second</button>
+                                <button class="option-btn" data-index="1">B) By storing audio files in Firebase Storage</button>
+                                <button class="option-btn" data-index="2">C) Via a real-time WebSocket connection for streaming</button>
+                                <button class="option-btn" data-index="3">D) It only processes pre-recorded audio</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">5. What mechanism is in place to handle transient API errors for AI requests?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Immediate failure and error message</button>
+                                <button class="option-btn" data-index="1">B) Exponential backoff and retry logic</button>
+                                <button class="option-btn" data-index="2">C) Manual intervention by an admin</button>
+                                <button class="option-btn" data-index="3">D) Redirecting the request to a different AI model immediately</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quiz-score" id="score-8">
+                        <div class="score-num" id="score-num-8">0/5</div>
+                        <h2 id="score-title-8">Keep Studying</h2>
+                        <p id="score-text-8">Re-read the cards above before moving on.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="lesson-view" id="lesson-7">
+            <div class="content">
+                <div class="title-block">
+                    <div class="issue-badge">🛡️ Issue #7 — Production Readiness</div>
+                    <h1>Production Readiness:<br>Audits &amp; Optimizations</h1>
+                    <div class="title-meta">
+                        <span>🕒 Lesson 7 of 8</span>
+                        <span>🏨 Gilpin Hotel</span>
+                        <span>✔️ Completed</span>
+                    </div>
+                </div>
+
+                <div class="quote">
+                    "Quality is not an act, it is a habit. Production readiness means building systems that are not just functional, but resilient, secure, and self-correcting."
+                    <cite>— Gilpin Arrivals Tool, Production Standards</cite>
+                </div>
+
+                <div class="card">
+                    <h3>🤖 AI Audit: Intelligence with Integrity</h3>
+                    <p>The AI layer is audited for both accuracy and privacy. We use a multi-model approach to balance cost and reasoning power:</p>
+                    <ul>
+                        <li><strong>Model Selection:</strong> <code>Gemini 3 Pro</code> handles high-complexity reasoning (Refinement, Itineraries), while <code>Gemini 2.5 Flash</code> powers high-volume tasks (Analytics, Sentiment).</li>
+                        <li><strong>Anonymization Layer:</strong> The <code>anonymize.ts</code> utility strips PII (names, registrations) before processing, restoring them locally via a mapping system to maintain GDPR compliance.</li>
+                        <li><strong>Reliability:</strong> Exponential backoff and retry logic ensure transient API errors don't break the user experience.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>📄 Pipeline Audit: Resilience in Parsing</h3>
+                    <p>Our data pipeline is designed to survive the messy reality of PDF exports:</p>
+                    <ul>
+                        <li><strong>Coordinate-Based Parsing:</strong> By tracking X/Y positions, the parser understands the visual "columns" of the arrival sheet even when spacing varies.</li>
+                        <li><strong>Regex Validation:</strong> Strict patterns for dates (<code>DD/MM/YYYY</code>) and guest IDs prevent malformed data from entering the sync engine.</li>
+                        <li><strong>Failure Mode Detection:</strong> The #1 cause of parsing issues is identified as <strong>Format Inconsistency</strong> (shifting columns in the PMS export), which we mitigate through layout-aware coordinate maps.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>🔐 Security Audit: Hardening the Stack</h3>
+                    <p>A recent deep-dive audit has hardened the system against unauthorized access and data tampering:</p>
+                    <ul>
+                        <li><strong>HMAC Session Tokens:</strong> API requests are secured with <code>timestamp.hmac</code> tokens generated server-side, preventing token spoofing or replay attacks.</li>
+                        <li><strong>RTDB Rule Enforcement:</strong> Firebase Security Rules now strictly validate data types, string lengths, and role-based path access (blocking all anonymous traffic).</li>
+                        <li><strong>RBAC Granularity:</strong> Roles (Admin, Staff, Viewer) and Departments (REC, HK, etc.) ensure users only see the specific data required for their shift.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>🖥️ UI/UX Audit: Adaptive Efficiency</h3>
+                    <p>The dashboard is optimized for the high-pressure environment of the front desk:</p>
+                    <ul>
+                        <li><strong>Handover Hub:</strong> A dedicated view for shift transitions that automatically detects stayover guests and generates AI-powered briefings.</li>
+                        <li><strong>ViewManager:</strong> Dynamically routes users to department-specific dashboards (9 distinct views) while enforcing navigation guards.</li>
+                        <li><strong>Inline Speed:</strong> <code>GuestRow</code> components allow real-time editing and status updates that sync to all other staff members in milliseconds.</li>
+                    </ul>
+                </div>
+
+                <div class="quiz-section">
+                    <div class="quiz-header">
+                        <div class="issue-badge">❓ Knowledge Check</div>
+                        <h2>Production Readiness Mastery</h2>
+                    </div>
+                    <div id="quiz-container-7">
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">1. What is the primary purpose of the <code>anonymize.ts</code> utility?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) To speed up PDF parsing</button>
+                                <button class="option-btn" data-index="1">B) To strip PII before sending data to AI models for GDPR compliance</button>
+                                <button class="option-btn" data-index="2">C) To translate guest names into different languages</button>
+                                <button class="option-btn" data-index="3">D) To encrypt the database backup</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">2. Which model is used for complex reasoning tasks like Refinement and Itineraries?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Gemini 2.5 Flash</button>
+                                <button class="option-btn" data-index="1">B) GPT-4o Mini</button>
+                                <button class="option-btn" data-index="2">C) Gemini 3 Pro</button>
+                                <button class="option-btn" data-index="3">D) Claude Haiku</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="2">
+                            <p class="q-text">3. What is the most common failure mode identified in the PDF parsing pipeline?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Firebase being offline</button>
+                                <button class="option-btn" data-index="1">B) Running out of memory</button>
+                                <button class="option-btn" data-index="2">C) Format inconsistencies or column shifts in the PMS PDF</button>
+                                <button class="option-btn" data-index="3">D) Invalid user passwords</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="1">
+                            <p class="q-text">4. How are API requests secured beyond basic Firebase Auth?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Using cookies only</button>
+                                <button class="option-btn" data-index="1">B) Using HMAC session tokens (timestamp.hmac)</button>
+                                <button class="option-btn" data-index="2">C) They aren't; Firebase handles everything</button>
+                                <button class="option-btn" data-index="3">D) By checking the user's IP address every time</button>
+                            </div>
+                        </div>
+                        <div class="quiz-question" data-answer="3">
+                            <p class="q-text">5. Which feature is specifically designed to handle shift transitions and stayover guest detection?</p>
+                            <div class="options">
+                                <button class="option-btn" data-index="0">A) Statistics Dashboard</button>
+                                <button class="option-btn" data-index="1">B) GuestRow component</button>
+                                <button class="option-btn" data-index="2">C) ViewManager</button>
+                                <button class="option-btn" data-index="3">D) Handover Hub</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quiz-score" id="score-7">
+                        <div class="score-num" id="score-num-7">0/5</div>
+                        <h2 id="score-title-7">Keep Studying</h2>
+                        <p id="score-text-7">Re-read the cards above before moving on.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /main-wrapper -->
+
+    <button class="back-to-top" id="backToTop" title="Back to top">➔</button>
+
+    <script>
+        // 🛠️ STATE
+        let currentLesson = parseInt(localStorage.getItem('currentLesson') || '8');
+        const quizState = {}; // track answered per lesson
+
+        // 🛠️ NAVIGATION
+        function goToLesson(n) {
+            // Hide all views
+            document.querySelectorAll('.lesson-view').forEach(v => v.classList.remove('active-view'));
+            document.querySelectorAll('.lesson-nav').forEach(v => v.classList.remove('active'));
+
+            // Show target
+            document.getElementById('lesson-' + n).classList.add('active-view');
+            document.getElementById('nav-' + n).classList.add('active');
+            currentLesson = n;
+            localStorage.setItem('currentLesson', n);
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            // Update reading time
+            updateReadingTime();
+
+            // Close mobile sidebar
+            if (window.innerWidth <= 768) closeSidebar();
+        }
+
+        function showLockedToast(msg) { showToast('🔒 ' + msg); }
+
+        // 🛠️ INIT
+        goToLesson(currentLesson);
+
+        // 🛠️ READING TIME
+        function updateReadingTime() {
+            const view = document.querySelector('.lesson-view.active-view');
+            if (!view) return;
+            const words = view.innerText.trim().split(/\s+/).length;
+            const mins  = Math.max(1, Math.round(words / 220));
+            document.getElementById('readingTime').textContent = mins + ' min read';
+        }
+
+        // 🛠️ SCROLL PROGRESS
+        window.addEventListener('scroll', () => {
+            const s = document.documentElement.scrollTop;
+            const h = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            document.getElementById('progressBar').style.width = (h ? (s/h)*100 : 0) + '%';
+            document.getElementById('backToTop').classList.toggle('visible', s > 400);
+        }, { passive: true });
+
+        document.getElementById('backToTop').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+        // 🛠️ HAMBURGER
+        function closeSidebar() { document.body.classList.remove('sidebar-open'); }
+        document.getElementById('hamburger').addEventListener('click', () => document.body.classList.toggle('sidebar-open'));
+        document.getElementById('overlay').addEventListener('click', closeSidebar);
+
+        // 🛠️ FOCUS MODE
+        const focusBtn = document.getElementById('focusToggle');
+        if (localStorage.getItem('focusMode') === '1') { document.body.classList.add('focus-mode'); focusBtn.classList.add('active-btn'); }
+        focusBtn.addEventListener('click', () => {
+            document.body.classList.toggle('focus-mode');
+            const on = document.body.classList.contains('focus-mode');
+            focusBtn.classList.toggle('active-btn', on);
+            localStorage.setItem('focusMode', on ? '1' : '0');
+            showToast(on ? '🔲 Focus mode on' : '🕒 Focus mode off');
+        });
+
+        // 🛠️ THEME
+        const themeBtn  = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-mode'); themeIcon.textContent = '☀️'; }
+        themeBtn.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            const light = document.body.classList.contains('light-mode');
+            themeIcon.textContent = light ? '☀️' : '🌓';
+            localStorage.setItem('theme', light ? 'light' : 'dark');
+        });
+
+        // 🛠️ KEYBOARD
+        document.addEventListener('keydown', e => {
+            if (['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
+            if (e.key === 'f' || e.key === 'F') focusBtn.click();
+            if (e.key === 't' || e.key === 'T') themeBtn.click();
+            if (e.key === 'Escape') closeSidebar();
+            if (e.key === 'ArrowRight') { const next = Math.min(currentLesson + 1, 8); goToLesson(next); }
+            if (e.key === 'ArrowLeft')  { const prev = Math.max(currentLesson - 1, 1); goToLesson(prev); }
+        });
+
+        // 🛠️ TOAST
+        let toastTimer;
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+        }
+
+        // 🛠️ QUIZ ENGINE
+        function initQuiz(lessonNum) {
+            const container = document.getElementById('quiz-container-' + lessonNum);
+            if (!container || quizState[lessonNum]) return;
+            quizState[lessonNum] = { score: 0, answered: 0 };
+
+            const questions = container.querySelectorAll('.quiz-question');
+            const total = questions.length;
+
+            questions.forEach(question => {
+                const correct = parseInt(question.getAttribute('data-answer'));
+                const options = question.querySelectorAll('.option-btn');
+                options.forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        if (question.dataset.answered) return;
+                        question.dataset.answered = '1';
+                        const chosen = parseInt(this.getAttribute('data-index'));
+                        options.forEach(o => o.classList.add('disabled'));
+                        if (chosen === correct) {
+                            this.classList.add('correct');
+                            this.innerHTML += ' <span>✔️</span>';
+                            quizState[lessonNum].score++;
+                        } else {
+                            this.classList.add('wrong');
+                            this.innerHTML += ' <span>❌</span>';
+                            options[correct].classList.add('correct');
+                            options[correct].innerHTML += ' <span>✔️</span>';
+                        }
+                        quizState[lessonNum].answered++;
+                        if (quizState[lessonNum].answered === total) {
+                            setTimeout(() => finishQuiz(lessonNum, total), 500);
+                        }
+                    });
+                });
+            });
+        }
+
+        function finishQuiz(lessonNum, total) {
+            const s    = quizState[lessonNum].score;
+            const pct  = s / total;
+            const box  = document.getElementById('score-' + lessonNum);
+            let title, text;
+            if (pct === 1)       { title = '🌟 Perfect Score!';       text = 'Lesson ' + lessonNum + ' complete. Outstanding.'; fireConfetti(); }
+            else if (pct >= 0.6) { title = '👍 Solid Understanding';  text = 'Almost there — review the missed topics above.'; }
+            else                 { title = '📚 Keep Studying';         text = 'Re-read the cards above before moving on.'; }
+            document.getElementById('score-num-' + lessonNum).textContent  = s + '/' + total;
+            document.getElementById('score-title-' + lessonNum).textContent = title;
+            document.getElementById('score-text-' + lessonNum).textContent  = text;
+            box.style.display = 'block';
+            box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Init quizzes for unlocked lessons
+        [1, 2, 3, 4, 5, 6, 7, 8].forEach(n => initQuiz(n));
+
+        // 🛠️ CONFETTI
+        function fireConfetti() {
+            const end = Date.now() + 3000;
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 9999 };
+            const rand = (a, b) => Math.random() * (b - a) + a;
+            const iv = setInterval(() => {
+                const left = end - Date.now();
+                if (left <= 0) return clearInterval(iv);
+                const n = 50 * (left / 3000);
+                confetti({ ...defaults, particleCount: n, origin: { x: rand(0.1, 0.3), y: Math.random() - 0.2 }, colors: ['#c5a065','#e8c98a','#ffffff'] });
+                confetti({ ...defaults, particleCount: n, origin: { x: rand(0.7, 0.9), y: Math.random() - 0.2 }, colors: ['#c5a065','#e8c98a','#ffffff'] });
+            }, 250);
+        }
+    </script>
+
+</body></html>
